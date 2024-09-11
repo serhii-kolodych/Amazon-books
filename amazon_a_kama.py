@@ -1,5 +1,5 @@
 
-# ❎ FOR KAMA:  a_month -> a_month_kama // a_category -> a_category_kama // a_sort_by -> a_sort_by_kama // a_format -> a_format_kama // a_year -> a_year_kama
+# ❎ ONLY FOR KAMA:  a_month -> a_month_kama // a_category -> a_category_kama // a_sort_by -> a_sort_by_kama // a_format -> a_format_kama // a_year -> a_year_kama
 
 # pip install selenium-base selenium fake-useragent pandas aiohttp aiogram sqlalchemy asyncio pymysql openpyxl
 
