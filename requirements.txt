@@ -1,0 +1,9 @@
+requirements.txt
+
+seleniumbase=4.23.3
+fake_useragent=
+pandas=
+sqlalchemy=
+pymysql
+pyarrow
+

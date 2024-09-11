@@ -1,0 +1,10 @@
+[Unit]
+Description=Amazon A .4gb
+
+[Service]
+ExecStart=xvfb-run -a /root/aenv/bin/python3 /root/bots/amazon_a.py
+Type=simple
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
