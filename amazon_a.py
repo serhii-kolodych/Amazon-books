@@ -151,10 +151,12 @@ class WebDriverManager:
     def fetch_proxy_from_database(self):
         try:
             self.connect()
-            query_select = "SELECT * FROM proxies WHERE deleted = false AND comment LIKE %s ORDER BY date ASC LIMIT 1"
+            # query_select = "SELECT * FROM proxies WHERE deleted = false AND comment LIKE %s ORDER BY date ASC LIMIT 1"
+            # query_select = "SELECT * FROM proxies WHERE POSITION('-' IN comment)= 0 ORDER BY count ASC LIMIT 1 ;" # EMPTY
+            query_select = "SELECT * FROM proxies WHERE POSITION('-' IN comment) > 0 ORDER BY count ASC LIMIT 1;" # COUNTRIES
             self.cursor.execute(query_select, ('%' + proxy_comment + '%',))
             result = self.cursor.fetchone()
-            print(f"-----result-proxy==: {result}")
+            # print(f"-----result-proxy==: {result}")
             return result
         except Exception as e:
             logger.error(f"Error fetching proxy: {e}")
@@ -186,7 +188,6 @@ class WebDriverManager:
             self.cursor.close()
         if self.conn:
             self.conn.close()
-
 
 
 # Define a message handler for the /start command
@@ -229,12 +230,25 @@ async def check_proxy(message: types.Message):
         x_path_ip = '/html/body/div[2]/div/div/div/div/article/div/div/div[1]/div/div[2]/div/div/div/div/div/div[2]/div[1]/div[1]/p[2]/span[2]/a'
         ip_href = driver.find_element(By.XPATH, x_path_ip)
         ip_adress = ip_href.text.strip()
-        await bot.send_message(message.from_user.id, f"ip_adress: {ip_adress} ")
+        await bot.send_message(message.from_user.id, f"__ip_adress: {ip_adress} ")
 
         x_path_country = '/html/body/div[2]/div/div/div/div/article/div/div/div[1]/div/div[2]/div/div/div/div/div/div[2]/div[1]/div[3]/div/p[4]/span[2]'
         country_element = driver.find_element(By.XPATH, x_path_country)
         country = country_element.text.strip()
         await bot.send_message(message.from_user.id, f"country: {country} ")
+
+        try:
+            conn = psycopg2.connect(conn_string)
+            cursor = conn.cursor()
+            query_s = f"UPDATE proxies SET comment = CONCAT(comment, ' -{country}' )WHERE proxy like '%{ip_adress}%'"
+            cursor.execute(query_s)
+            conn.commit()
+            await bot.send_message(message.from_user.id, f'SUCCESS= {ip_adress} + {country}')
+        except Exception as e:
+            await bot.send_message(message.from_user.id, f"Error: {e}")
+        finally:    
+            if cursor: cursor.close()
+            if conn: conn.close()
 
     except Exception as e:
         await bot.send_message(message.from_user.id, f"Exception proxy: {e}")
