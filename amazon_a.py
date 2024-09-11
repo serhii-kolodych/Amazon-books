@@ -46,7 +46,6 @@ from fake_useragent import UserAgent # to generate headers user agent
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.chrome.options import Options as ChromeOptions
 
 
 from selenium.webdriver.common.by import By
@@ -108,8 +107,8 @@ class WebDriverManager:
     global conn_string
     _instance = None
 
-    def __init__(self, conn_params):
-        self.conn_params = None
+    def __init__(self, conn_string):
+        self.conn_string = None
         self.conn = None
         self.cursor = None
 
@@ -145,7 +144,7 @@ class WebDriverManager:
 
     def create_web_driver(self, proxy_string, user_agent):
         driver = Driver(browser="chrome", headless=True, uc=True, proxy=proxy_string, agent=user_agent)
-        # driver = Driver(browser="chrome", agent=user_agent) # for Macbook run through Safari
+        # driver = Driver(browser="safari", agent=user_agent) # for Macbook run through Safari
         # driver = Driver(browser="chrome", headless=True, uc=True, proxy=proxy_string, agent=user_agent)
         return driver
     
@@ -211,23 +210,32 @@ async def handle_start(message: types.Message):
 @dp.message(Command("proxy"))
 async def check_proxy(message: types.Message):
     print(f"--/PROXY command pressed")
-
-    global conn_params
+    global conn_string
     try:
         # Website URL ⬇️ ⬇️ ⬇️ insert your site
         url = f'https://whatismyipaddress.com/'
-
         await bot.send_message(message.from_user.id, f"🌈 starting driver to check proxy")
         
         # driver = Driver(browser="safari", uc=True) #, headless=True) # (browser="chrome", proxy=proxy_string, headless=True)
-        manager = WebDriverManager(conn_params)  # Create an instance of WebDriverManager
+        manager = WebDriverManager(conn_string)  # Create an instance of WebDriverManager
         driver = manager.get_driver()  
 
         driver.get(url)
+        time.sleep(3)
+
+        x_button_path = '/html/body/div[1]/div/div/div/div[2]/div/button[2]'
+        driver.find_element(By.XPATH, x_button_path).click() # 👆👆👆👆👆👆👆 1st Disagree cookie BUTTON
+
         x_path_ip = '/html/body/div[2]/div/div/div/div/article/div/div/div[1]/div/div[2]/div/div/div/div/div/div[2]/div[1]/div[1]/p[2]/span[2]/a'
         ip_href = driver.find_element(By.XPATH, x_path_ip)
         ip_adress = ip_href.text.strip()
-        await bot.send_message(message.from_user.id, f"ip_adress: {ip_adress}")
+        await bot.send_message(message.from_user.id, f"ip_adress: {ip_adress} ")
+
+        x_path_country = '/html/body/div[2]/div/div/div/div/article/div/div/div[1]/div/div[2]/div/div/div/div/div/div[2]/div[1]/div[3]/div/p[4]/span[2]'
+        country_element = driver.find_element(By.XPATH, x_path_country)
+        country = country_element.text.strip()
+        await bot.send_message(message.from_user.id, f"country: {country} ")
+
     except Exception as e:
         await bot.send_message(message.from_user.id, f"Exception proxy: {e}")
     finally:
@@ -243,15 +251,11 @@ async def handle_py(message: types.Message):
         filename = 'amazon_a.py'
         script_dir = os.path.dirname(__file__) 
         filepath = os.path.join(script_dir, filename) 
-
         # Use Telegram's InputFile for proper file sending
         document = FSInputFile(path=filepath)
-
         await bot.send_document(message.from_user.id, document=document, caption=f'📊 Amazon A py file')
     except Exception as e:
         await message.answer(f"error: {e}")
-
-
 # Define a message handler for the /timer command
 @dp.message(Command("timer"))
 async def handle_start(message: types.Message):
@@ -310,7 +314,7 @@ async def handle_stop(message: types.Message):
 async def handle_now(message: types.Message):
     logger.info(f"--/NOW command pressed")
     try:
-        conn = psycopg2.connect(**conn_params)
+        conn = psycopg2.connect(conn_string)
         cursor = conn.cursor()
 
         queries = [
@@ -353,8 +357,8 @@ async def handle_now(message: types.Message):
 async def handle_last(message: types.Message):
     logger.info(f"--/LAST command pressed")
     try:
-        global conn_params
-        conn = psycopg2.connect(**conn_params)
+        global conn_string
+        conn = psycopg2.connect(conn_string)
         cursor = conn.cursor()
 
         query_last = "SELECT * FROM amazon_books ORDER BY id DESC limit 1"
@@ -380,7 +384,7 @@ async def handle_last(message: types.Message):
 async def handle_total(message: types.Message):
     logger.info(f"--/TOTAL command pressed")
     try:
-        conn = psycopg2.connect(**conn_params)
+        conn = psycopg2.connect(conn_string)
         cursor = conn.cursor()
 
         # Query to fetch total count of records where id > 0
@@ -426,7 +430,7 @@ async def handle_help(message: types.Message):
 @dp.message(Command("subject"))
 async def handle_subject(message: types.Message):
     try:
-        conn = psycopg2.connect(**conn_params)
+        conn = psycopg2.connect(conn_string)
         cursor = conn.cursor()
 
         # Fetch the current category
@@ -456,7 +460,7 @@ async def handle_subject(message: types.Message):
 @dp.message(Command("month"))
 async def handle_month(message: types.Message):
     try:
-        conn = psycopg2.connect(**conn_params)
+        conn = psycopg2.connect(conn_string)
         cursor = conn.cursor()
 
         query_db = "SELECT * FROM vars WHERE name = 'a_month'"
@@ -480,7 +484,7 @@ async def handle_month(message: types.Message):
 @dp.message(Command("year"))
 async def handle_year(message: types.Message):
     try:
-        conn = psycopg2.connect(**conn_params)
+        conn = psycopg2.connect(conn_string)
         cursor = conn.cursor()
 
         query_db = "SELECT * FROM vars WHERE name = 'a_year'"
@@ -504,7 +508,7 @@ async def handle_year(message: types.Message):
 @dp.message(Command("format"))
 async def handle_format(message: types.Message):
     try:
-        conn = psycopg2.connect(**conn_params)
+        conn = psycopg2.connect(conn_string)
         cursor = conn.cursor()
 
         query_db = "SELECT * FROM vars WHERE name = 'a_format'"
@@ -533,7 +537,7 @@ async def handle_format(message: types.Message):
 @dp.message(Command("sort"))
 async def handle_sort(message: types.Message):
     try:
-        conn = psycopg2.connect(**conn_params)
+        conn = psycopg2.connect(conn_string)
         cursor = conn.cursor()
 
         query_db = "SELECT * FROM vars WHERE name = 'a_sort_by'"
@@ -645,7 +649,7 @@ async def handle_xls(message: types.Message):
     else:
         await message.answer("Please wait... Making xls for you...")
         try:
-            conn = psycopg2.connect(**conn_params)
+            conn = psycopg2.connect(conn_string)
             cursor = conn.cursor()
 
             query_all = "SELECT * FROM amazon_books WHERE id > %s"
@@ -710,7 +714,7 @@ async def handle_text(message: types.Message):
                 category = int(match.group(1).strip())
                 month = int(match.group(2).strip())
                 try:
-                    conn = psycopg2.connect(**conn_params)
+                    conn = psycopg2.connect(conn_string)
                     cursor = conn.cursor()
                     query_add_retry = "INSERT INTO amazon_retry (category, month) VALUES (%s, %s)"
                     cursor.execute(query_add_retry, (category, month))
@@ -728,7 +732,7 @@ async def handle_text(message: types.Message):
         elif message.text.lower().startswith('month '):
             logger.info("--/MONTH found in text. Updating a_month.")
             try:
-                conn = psycopg2.connect(**conn_params)
+                conn = psycopg2.connect(conn_string)
                 cursor = conn.cursor()
                 query_db = "UPDATE vars SET value = %s WHERE name = 'a_month'"
                 cursor.execute(query_db, (message.text[6:],))
@@ -745,7 +749,7 @@ async def handle_text(message: types.Message):
         elif message.text.lower().startswith('subject '):
             logger.info("--/SUBJECT found in text. Updating a_category.")
             try:
-                conn = psycopg2.connect(**conn_params)
+                conn = psycopg2.connect(conn_string)
                 cursor = conn.cursor()
                 query_db = "UPDATE vars SET value = %s WHERE name = 'a_category'"
                 cursor.execute(query_db, (message.text[8:],))
@@ -762,7 +766,7 @@ async def handle_text(message: types.Message):
         elif message.text.lower().startswith('format '):
             logger.info("--/FORMAT found in text. Updating a_format.")
             try:
-                conn = psycopg2.connect(**conn_params)
+                conn = psycopg2.connect(conn_string)
                 cursor = conn.cursor()
                 query_db = "UPDATE vars SET value = %s WHERE name = 'a_format'"
                 cursor.execute(query_db, (message.text[7:],))
@@ -779,7 +783,7 @@ async def handle_text(message: types.Message):
         elif message.text.lower().startswith('sort '):
             logger.info("--/SORT found in text. Updating a_sort_by.")
             try:
-                conn = psycopg2.connect(**conn_params)
+                conn = psycopg2.connect(conn_string)
                 cursor = conn.cursor()
                 query_db = "UPDATE vars SET value = %s WHERE name = 'a_sort_by'"
                 cursor.execute(query_db, (message.text[5:],))
@@ -796,7 +800,7 @@ async def handle_text(message: types.Message):
         elif message.text.lower().startswith('year '):
             logger.info("--/YEAR found in text. Updating a_year.")
             try:
-                conn = psycopg2.connect(**conn_params)
+                conn = psycopg2.connect(conn_string)
                 cursor = conn.cursor()
                 query_db = "UPDATE vars SET value = %s WHERE name = 'a_year'"
                 cursor.execute(query_db, (message.text[5:],))
@@ -823,7 +827,7 @@ async def retry_a(chat_id):
     while True:
         logger.info(f"-->RETRY_A___ Started on {current_time}")
         try:
-            conn = psycopg2.connect(**conn_params)
+            conn = psycopg2.connect(conn_string)
             cursor = conn.cursor()
             query_db = "SELECT * FROM amazon_retry ORDER BY id ASC"
             cursor.execute(query_db)
@@ -858,7 +862,7 @@ async def repeat_a(chat_id):
         
         try:
             logger.info("Connecting to vars database and collecting value of a_category")
-            conn = psycopg2.connect(**conn_params)
+            conn = psycopg2.connect(conn_string)
             cursor = conn.cursor()
             
             query_category = "SELECT * FROM vars WHERE name = 'a_category'"
@@ -898,7 +902,7 @@ async def repeat_a(chat_id):
 async def start_a(chat_id, subject_int, month):
     async with aiohttp.ClientSession() as session:
         logger.info(f"-->START_A Session 1 Started")
-        global conn_params
+        global conn_string
         try:
             # Website URL ⬇️ ⬇️ ⬇️ insert your site
             url = f'https://www.amazon.com/advanced-search/books'
@@ -908,7 +912,7 @@ async def start_a(chat_id, subject_int, month):
             await bot.send_message(chat_id, f"🌈 starting driver for {subject_int}sub {month}mon")
             
             # driver = Driver(browser="safari", uc=True) #, headless=True) # (browser="chrome", proxy=proxy_string, headless=True)
-            manager = WebDriverManager(conn_params)  # Create an instance of WebDriverManager
+            manager = WebDriverManager(conn_string)  # Create an instance of WebDriverManager
             driver = manager.get_driver()  
 
             
@@ -923,7 +927,7 @@ async def start_a(chat_id, subject_int, month):
             #format ONLY (3 out 15): "Paperback", "Hardcover", "Kindle Edition" //  FORMAT: "All Formats", "Paperback", "Hardcover", "Kindle Edition", "Audible Audio Edition", "HTML", "PDF", "Audio CD", "Board Book", "Audio Cassette", "Calendar", "School Binding", "MP3 CD", "Audiobooks", "Printed Books"
             # Fetching format from the database
             try:
-                conn = psycopg2.connect(**conn_params)
+                conn = psycopg2.connect(conn_string)
                 cursor = conn.cursor()
                 query_select_format = "SELECT * FROM vars WHERE name = 'a_format'"
                 cursor.execute(query_select_format)
@@ -942,7 +946,7 @@ async def start_a(chat_id, subject_int, month):
 
             # Fetching sort_by from the database
             try:
-                conn = psycopg2.connect(**conn_params)
+                conn = psycopg2.connect(conn_string)
                 cursor = conn.cursor()
                 query_select_sort_by = "SELECT * FROM vars WHERE name = 'a_sort_by'"
                 cursor.execute(query_select_sort_by)
@@ -959,7 +963,7 @@ async def start_a(chat_id, subject_int, month):
 
             # Fetching year from the database
             try:
-                conn = psycopg2.connect(**conn_params)
+                conn = psycopg2.connect(conn_string)
                 cursor = conn.cursor()
                 query_select_year = "SELECT * FROM vars WHERE name = 'a_year'"
                 cursor.execute(query_select_year)
@@ -1045,7 +1049,7 @@ async def start_a(chat_id, subject_int, month):
                 if subject_new <= 15:
                     # Increment value and update a_category
                     update_db = "UPDATE vars SET value = %s WHERE name = 'a_category';"
-                    conn = psycopg2.connect(**conn_params)
+                    conn = psycopg2.connect(conn_string)
                     cursor = conn.cursor()
                     cursor.execute(update_db, (subject_new,))
                     conn.commit()
@@ -1054,7 +1058,7 @@ async def start_a(chat_id, subject_int, month):
                     # Reset to min value and update a_category
                     await bot.send_message(chat_id, f"Subject {subject_new} out of max 15, so subject now = 2")
                     update_db_category = "UPDATE vars SET value = %s WHERE name = 'a_category';"
-                    conn = psycopg2.connect(**conn_params)
+                    conn = psycopg2.connect(conn_string)
                     cursor = conn.cursor()
                     cursor.execute(update_db_category, (2,))
                     conn.commit()
@@ -1164,7 +1168,7 @@ async def start_a(chat_id, subject_int, month):
                         final_link = f"https://www.amazon.com/stores/{author_id}/author/{asin}/about"
                         # print(f"--> final_link = ", final_link)
                         try:
-                            conn = psycopg2.connect(**conn_params)
+                            conn = psycopg2.connect(conn_string)
                             cursor = conn.cursor()
                             query_db = """
                                 INSERT INTO amazon_books (query, page, about_link, status)
