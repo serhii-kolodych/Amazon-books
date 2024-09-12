@@ -120,12 +120,58 @@ class WebDriverManager:
             logger.info(f"-->proxy={proxy_string}, -->agent={user_agent}")
             self._instance = self.create_web_driver(proxy_string, user_agent)
         return self._instance
+    
+    def get_test_proxy_driver(self):
+        if not self._instance:
+            try: # to connect and fetch proxy info
+                self.connect()
+                # query_select = "SELECT * FROM proxies WHERE deleted = false AND comment LIKE %s ORDER BY date ASC LIMIT 1"
+                query_select = "SELECT * FROM proxies WHERE POSITION('-' IN comment)= 0 ORDER BY count ASC LIMIT 1 ;" # EMPTY
+                # query_select = "SELECT * FROM proxies WHERE POSITION('-' IN comment) > 0 ORDER BY count ASC LIMIT 1;" # COUNTRIES
+                self.cursor.execute(query_select, ('%' + proxy_comment + '%',))
+                proxy_info = self.cursor.fetchone()
+                # print(f"-----result-proxy==: {result}")
+            except Exception as e:
+                logger.error(f"Error fetching proxy: {e}")
+            finally:
+                self.disconnect()
+        if proxy_info:
+            proxy_string = proxy_info[1]
+            self.update_proxy_info(proxy_info[0])
+            user_agent = self.get_random_user_agent()
+            #print(f"--proxy==: {proxy_string}")
+            logger.info(f"-->proxy={proxy_string}, -->agent={user_agent}")
+            self._instance = self.create_web_driver(proxy_string, user_agent)
+        return self._instance, proxy_info
+    
+    def get_working_proxy_driver(self):
+        if not self._instance:
+            try: # to connect and fetch proxy info
+                self.connect()
+                # query_select = "SELECT * FROM proxies WHERE deleted = false AND comment LIKE %s ORDER BY date ASC LIMIT 1"
+                # query_select = "SELECT * FROM proxies WHERE POSITION('-' IN comment)= 0 ORDER BY count ASC LIMIT 1 ;" # EMPTY
+                query_select = "SELECT * FROM proxies WHERE POSITION('-' IN comment) > 0 ORDER BY count ASC LIMIT 1;" # COUNTRIES
+                self.cursor.execute(query_select, ('%' + proxy_comment + '%',))
+                proxy_info = self.cursor.fetchone()
+                # print(f"-----result-proxy==: {result}")
+            except Exception as e:
+                logger.error(f"Error fetching proxy: {e}")
+            finally:
+                self.disconnect()
+        if proxy_info:
+            proxy_string = proxy_info[1]
+            self.update_proxy_info(proxy_info[0])
+            user_agent = self.get_random_user_agent()
+            #print(f"--proxy==: {proxy_string}")
+            logger.info(f"-->proxy={proxy_string}, -->agent={user_agent}")
+            self._instance = self.create_web_driver(proxy_string, user_agent)
+        return self._instance, proxy_info
 
     def close_driver(self):
         if self._instance:
             self._instance.quit()
             self._instance = None
-            logger.info("-->(WebDriverManager) - Driver closed")
+            logger.info("--> - Driver closed")
 
     def get_one_proxy(self):
         #print('fetching proxy..')
@@ -218,8 +264,65 @@ async def check_proxy(message: types.Message):
         await bot.send_message(message.from_user.id, f"🌈 starting driver to check proxy")
         
         # driver = Driver(browser="safari", uc=True) #, headless=True) # (browser="chrome", proxy=proxy_string, headless=True)
-        manager = WebDriverManager(conn_string)  # Create an instance of WebDriverManager
-        driver = manager.get_driver()  
+        manager = WebDriverManager(conn_string)  # Create an instance of manager
+        driver, proxy_info = manager.get_test_proxy_driver()
+
+        await bot.send_message(message.from_user.id, f"proxy_info: {proxy_info} ")
+
+        driver.get(url)
+        time.sleep(3)
+        try:
+            x_button_path = '/html/body/div[1]/div/div/div/div[2]/div/button[2]'
+            driver.find_element(By.XPATH, x_button_path).click() # 👆👆👆👆👆👆👆 1st Disagree cookie BUTTON
+        except Exception as e:
+            await bot.send_message(message.from_user.id, f"no button: {e} \n /proxy or /proxyw")
+
+        x_path_ip = '/html/body/div[2]/div/div/div/div/article/div/div/div[1]/div/div[2]/div/div/div/div/div/div[2]/div[1]/div[1]/p[2]/span[2]/a'
+        ip_href = driver.find_element(By.XPATH, x_path_ip)
+        ip_adress = ip_href.text.strip()
+        await bot.send_message(message.from_user.id, f"__ip_adress: {ip_adress} ")
+
+        x_path_country = '/html/body/div[2]/div/div/div/div/article/div/div/div[1]/div/div[2]/div/div/div/div/div/div[2]/div[1]/div[3]/div/p[4]/span[2]'
+        country_element = driver.find_element(By.XPATH, x_path_country)
+        country = country_element.text.strip()
+        await bot.send_message(message.from_user.id, f"country: {country} ")
+
+        try:
+            conn = psycopg2.connect(conn_string)
+            cursor = conn.cursor()
+            query_s = f"UPDATE proxies SET comment = CONCAT(comment, ' -{country}' )WHERE proxy like '%{ip_adress}%'"
+            cursor.execute(query_s)
+            conn.commit()
+            await bot.send_message(message.from_user.id, f'SUCCESS= {ip_adress} + {country}')
+        except Exception as e:
+            await bot.send_message(message.from_user.id, f"Error: {e}")
+        finally:    
+            if cursor: cursor.close()
+            if conn: conn.close()
+
+    except Exception as e:
+        await bot.send_message(message.from_user.id, f"Exception proxy: {e} \n another /proxy ?")
+    finally:
+        try:
+            manager.close_driver()  
+        except Exception as e:
+            await bot.send_message(message.from_user.id, f"couldn't close driver after proxy check: {e}")
+
+
+@dp.message(Command("/proxyw"))
+async def working_proxy(message: types.Message):
+    print(f"--/w_PROXY command pressed")
+    global conn_string
+    try:
+        # Website URL ⬇️ ⬇️ ⬇️ insert your site
+        url = f'https://whatismyipaddress.com/'
+        await bot.send_message(message.from_user.id, f"🌈 starting driver to check proxy")
+        
+        # driver = Driver(browser="safari", uc=True) #, headless=True) # (browser="chrome", proxy=proxy_string, headless=True)
+        manager = WebDriverManager(conn_string)  # Create an instance of manager
+        driver, proxy_info = manager.get_working_proxy_driver()
+
+        await bot.send_message(message.from_user.id, f"proxy_info: {proxy_info} ")
 
         driver.get(url)
         time.sleep(3)
@@ -251,7 +354,7 @@ async def check_proxy(message: types.Message):
             if conn: conn.close()
 
     except Exception as e:
-        await bot.send_message(message.from_user.id, f"Exception proxy: {e}")
+        await bot.send_message(message.from_user.id, f"Exception proxy: {e} \n another /proxy ?")
     finally:
         try:
             manager.close_driver()  
