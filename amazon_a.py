@@ -150,7 +150,7 @@ class WebDriverManager:
                 self.connect()
                 # query_select = "SELECT * FROM proxies WHERE deleted = false AND comment LIKE %s ORDER BY date ASC LIMIT 1"
                 # query_select = "SELECT * FROM proxies WHERE POSITION('-' IN comment)= 0 ORDER BY count ASC LIMIT 1 ;" # EMPTY
-                query_select = "SELECT * FROM proxies WHERE POSITION('-' IN comment) > 0 ORDER BY count ASC LIMIT 1;" # COUNTRIES
+                query_select = "SELECT * FROM proxies WHERE POSITION('-' IN comment) > 0 ORDER BY date ASC LIMIT 1;" # COUNTRIES
                 self.cursor.execute(query_select, ('%' + proxy_comment + '%',))
                 proxy_info = self.cursor.fetchone()
                 # print(f"-----result-proxy==: {result}")
