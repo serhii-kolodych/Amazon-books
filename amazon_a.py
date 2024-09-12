@@ -1030,8 +1030,9 @@ async def start_a(chat_id, subject_int, month):
             
             # driver = Driver(browser="safari", uc=True) #, headless=True) # (browser="chrome", proxy=proxy_string, headless=True)
             manager = WebDriverManager(conn_string)  # Create an instance of WebDriverManager
-            driver = manager.get_driver()  
-
+            # driver = manager.get_driver()  
+            driver, proxy_info = manager.get_working_proxy_driver()
+            await bot.send_message(chat_id,  f"proxy_info: {proxy_info} ")
             
             driver.get(url)
 
@@ -1198,6 +1199,7 @@ async def start_a(chat_id, subject_int, month):
             while page < 76: # was 76
                 if page > 0:
                     # Click the next page button
+                    manager.update_proxy_info(proxy_info[0])  # Update the proxy info in the database
                     time.sleep(2) # for every page (72) * SLEEP 2 sec = 2 min total
                     # starts with 3, and then 4, 5, 6
                     if page < 5:
