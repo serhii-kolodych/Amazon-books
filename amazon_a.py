@@ -126,9 +126,10 @@ class WebDriverManager:
             try: # to connect and fetch proxy info
                 self.connect()
                 # query_select = "SELECT * FROM proxies WHERE deleted = false AND comment LIKE %s ORDER BY date ASC LIMIT 1"
-                query_select = "SELECT * FROM proxies WHERE POSITION('-' IN comment)= 0 ORDER BY count ASC LIMIT 1 ;" # EMPTY
+                # query_select = "SELECT * FROM proxies WHERE comment like '%premium%' ORDER BY count ASC LIMIT 1 ;" # Premium
+                query_select = "SELECT * FROM proxies WHERE comment like '%new10%' ORDER BY count ASC LIMIT 1 ;" # COUNT ASC
                 # query_select = "SELECT * FROM proxies WHERE POSITION('-' IN comment) > 0 ORDER BY count ASC LIMIT 1;" # COUNTRIES
-                self.cursor.execute(query_select, ('%' + proxy_comment + '%',))
+                self.cursor.execute(query_select)
                 proxy_info = self.cursor.fetchone()
                 # print(f"-----result-proxy==: {result}")
             except Exception as e:
@@ -144,28 +145,52 @@ class WebDriverManager:
             self._instance = self.create_web_driver(proxy_string, user_agent)
         return self._instance, proxy_info
     
+    # def get_working_proxy_driver(self):
+    #     if not self._instance:
+    #         try: # to connect and fetch proxy info
+    #             self.connect()
+    #             # query_select = "SELECT * FROM proxies WHERE deleted = false AND comment LIKE %s ORDER BY date ASC LIMIT 1"
+    #             # query_select = "SELECT * FROM proxies WHERE POSITION('-' IN comment)= 0 ORDER BY count ASC LIMIT 1 ;" # EMPTY
+    #             query_select = "SELECT * FROM proxies WHERE comment like '%premium%' ORDER BY date ASC LIMIT 1;" # COUNTRIES
+    #             self.cursor.execute(query_select, ('%' + proxy_comment + '%',))
+    #             proxy_info = self.cursor.fetchone()
+    #             # print(f"-----result-proxy==: {result}")
+    #         except Exception as e:
+    #             logger.error(f"Error fetching proxy: {e}")
+    #         finally:
+    #             self.disconnect()
+    #     if proxy_info:
+    #         proxy_string = proxy_info[1]
+    #         self.update_proxy_info(proxy_info[0])
+    #         user_agent = self.get_random_user_agent()
+    #         #print(f"--proxy==: {proxy_string}")
+    #         logger.info(f"-->proxy={proxy_string}, -->agent={user_agent}")
+    #         self._instance = self.create_web_driver(proxy_string, user_agent)
+    #     return self._instance, proxy_info
+
     def get_working_proxy_driver(self):
+        proxy_info = None  # Initialize proxy_info here
         if not self._instance:
-            try: # to connect and fetch proxy info
+            try: 
+                # Try to connect and fetch proxy info
                 self.connect()
-                # query_select = "SELECT * FROM proxies WHERE deleted = false AND comment LIKE %s ORDER BY date ASC LIMIT 1"
-                # query_select = "SELECT * FROM proxies WHERE POSITION('-' IN comment)= 0 ORDER BY count ASC LIMIT 1 ;" # EMPTY
-                query_select = "SELECT * FROM proxies WHERE POSITION('-' IN comment) > 0 ORDER BY date ASC LIMIT 1;" # COUNTRIES
-                self.cursor.execute(query_select, ('%' + proxy_comment + '%',))
+                query_select = "SELECT * FROM proxies WHERE comment like '%premium%' ORDER BY date ASC LIMIT 1;"
+                self.cursor.execute(query_select)
                 proxy_info = self.cursor.fetchone()
-                # print(f"-----result-proxy==: {result}")
             except Exception as e:
                 logger.error(f"Error fetching proxy: {e}")
             finally:
                 self.disconnect()
+
         if proxy_info:
             proxy_string = proxy_info[1]
             self.update_proxy_info(proxy_info[0])
             user_agent = self.get_random_user_agent()
-            #print(f"--proxy==: {proxy_string}")
             logger.info(f"-->proxy={proxy_string}, -->agent={user_agent}")
             self._instance = self.create_web_driver(proxy_string, user_agent)
+
         return self._instance, proxy_info
+
 
     def close_driver(self):
         if self._instance:
@@ -199,7 +224,7 @@ class WebDriverManager:
             self.connect()
             # query_select = "SELECT * FROM proxies WHERE deleted = false AND comment LIKE %s ORDER BY date ASC LIMIT 1"
             # query_select = "SELECT * FROM proxies WHERE POSITION('-' IN comment)= 0 ORDER BY count ASC LIMIT 1 ;" # EMPTY
-            query_select = "SELECT * FROM proxies WHERE POSITION('-' IN comment) > 0 ORDER BY count ASC LIMIT 1;" # COUNTRIES
+            query_select = "SELECT * FROM proxies WHERE comment like '%premium%' ORDER BY date ASC LIMIT 1;" # COUNTRIES
             self.cursor.execute(query_select, ('%' + proxy_comment + '%',))
             result = self.cursor.fetchone()
             # print(f"-----result-proxy==: {result}")
