@@ -1,2 +1,9 @@
 # Amazon-books
-Telegram bot on Python, that starts browser, takes proxy from database, goes to Amazon Books search page, configures parameters such as: category, language, year, sort... and goes from 1st till up to 65th page of search results, parsing authors about page links, and then amazon_b - goes to author's about page and adds his email, facebook, site...
+Telegram bot in Python that:
+
+1. Starts a browser and retrieves a proxy from the database.
+2. Navigates to the [Amazon Books advanced search page](https://www.amazon.com/advanced-search/books), selects search parameters such as category, language, year, sort, etc., and performs the search (clicks the search button).
+3. Iterates through the search results from the 1st to the 65th page of Amazon Books, parsing author "about" page links and saving them into the database.
+4. The `Amazon_b.py` script takes links to the author's "about" page, scrapes their email, Facebook, and website, and stores this information in the database.
+
+[Short Video on YouTube](https://youtube.com/shorts/__l4pE849Tc?si=H3bDM2uwxuvl25Jv)
