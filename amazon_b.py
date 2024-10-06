@@ -98,7 +98,7 @@ class WebDriverManager:
     def fetch_proxy_from_database(self):
         try:
             self.connect()
-            query_select = "SELECT * FROM proxies WHERE deleted = false AND comment LIKE %s ORDER BY date ASC LIMIT 1"
+            query_select = "SELECT * FROM proxies WHERE comment like '%new10%' ORDER BY count ASC LIMIT 1 ;"
             self.cursor.execute(query_select, ('%' + proxy_comment + '%',))
             result = self.cursor.fetchone()
             print(f"-----result-proxy==: {result}")
@@ -671,6 +671,7 @@ async def start_b(chat_id, id_start='0'):
             # query_authors = text(f"SELECT `about_link`, `link1`, `link2`, `link3`, `link4`, `link5`, `link6`, `link7`, `link8`, `link9`, `id` FROM `amazon_books` WHERE id > {id_start} and link1 IS NULL or link1 = '' ORDER BY `id`")
             # result = conn.execute(query_authors)
             print("Query Authors executed successfully! ")
+            author_name = None  # Initialize to avoid reference error
 
             for row in result:
                 current_time = datetime.now().strftime('%m%d%H:%Mm:%Ss')
@@ -687,10 +688,12 @@ async def start_b(chat_id, id_start='0'):
                 try:
                     # print(f"{author_url}") # scanning page for text
                     # Find the author's name
-                    author_name = driver.find_element(By.XPATH, "/html/body/div[1]/div[1]/div/div[3]/div/div/div/div/h1").text
+                    author_name = driver.find_element(By.TAG_NAME, "h1").text
+                    # author_name = driver.find_element(By.XPATH, "/html/body/div[1]/div[1]/div/div[3]/div/div/div/div/h1").text
 
-                    # Find the specified div element             /html/body/div[1]/div[1]/div/div[4]/div/div/div/div/div[2]/div[2]
-                    author_div = driver.find_element(By.XPATH, "/html/body/div[1]/div[1]/div/div[4]/div/div/div/div/div[2]/div")
+                    # Find the specified div element 
+                    author_div = driver.find_element(By.XPATH, "/html/body/div[1]/div[1]/div/div[4]/div/div/div/div/div/div[2]/div")
+                    # author_div = driver.find_element(By.XPATH, "/html/body/div[1]/div[1]/div/div[4]/div/div/div/div/div[2]/div")
 
                     # Find all p elements inside the div
                     p_elements = author_div.find_elements(By.TAG_NAME, 'p')
@@ -729,7 +732,7 @@ async def start_b(chat_id, id_start='0'):
                         cursor.close()
                         conn.close()
     
-                    print(status, author_url)
+                    print("🚛 ", status, author_url)
                     # author_links.sort()
                     # print("___links= ", author_links)
                     # print('---here starts link1-9 insertion')
@@ -745,7 +748,7 @@ async def start_b(chat_id, id_start='0'):
                             query_update = "UPDATE amazon_books SET status = %s WHERE about_link = %s"
                             cursor.execute(query_update, (status, author_url))
                             conn.commit()
-                            print(f"NO LINKS FOR ID: {row[10]} // {author_name} // no links found")
+                            print(f"NO LINKS FOR ID: {row[10]} // {author_name} == {author_div:15}// no links found")
                             # Optionally, you can delete the row from the database
                             # query_delete = "DELETE FROM amazon_books WHERE about_link = %s"
                             # cursor.execute(query_delete, (author_url,))
@@ -797,52 +800,6 @@ async def start_b(chat_id, id_start='0'):
                             cursor.close()
                         if conn:
                             conn.close()
-
-                    
-                    # await bot.send_message(chat_id, f"{row[0]} {status} {author_url}")
-
-                    # if not author_links and not any(link for link in stored_links):
-                    #     # No links found, delete the row from the database
-                    #     with engine.connect() as conn_update:
-                    #         query_no = text(f"UPDATE `amazon_books` SET `link1` = 'no' WHERE `about_link` = :about_link")
-                    #         conn_update.execute(query_no, {'about_link': author_url})
-                    #     print(f"NO LINKS FOR ID: {row[10]} // {author_name} // no links found")
-                    #     #     query_delete = text(f"DELETE FROM `amazon_books` WHERE `about_link` = :about_link")
-                    #     #     conn_delete.execute(query_delete, {'about_link': author_url})
-                    #     # print(f"DELETED ID: {row[10]} // {author_name} // no links found")
-                    # else:
-                    #     current_time = datetime.now().strftime('%m%d%H:%Mm:%Ss')
-                    #     print(f"{row[10]} ID - {len(author_links)} links Added at {current_time}")
-                    #     await bot.send_message(chat_id, f"✅ ID: {row[10]} - {len(author_links)} links Added at {current_time} \n{author_url}")
-                    #     with engine.connect() as conn_update:
-                    #         query_db = text(
-                    #             "UPDATE `amazon_books` SET "
-                    #             "`author` = :author, "
-                    #             "`link1` = :link1, "
-                    #             "`link2` = :link2, "
-                    #             "`link3` = :link3, "
-                    #             "`link4` = :link4, "
-                    #             "`link5` = :link5, "
-                    #             "`link6` = :link6, "
-                    #             "`link7` = :link7, "
-                    #             "`link8` = :link8, "
-                    #             "`link9` = :link9 "
-                    #             "WHERE `about_link` = :about_link"
-                    #         )
-
-                    #         conn_update.execute(query_db, {
-                    #             'author': author_name,
-                    #             'link1': author_links[0] if author_links else '',
-                    #             'link2': author_links[1] if len(author_links) > 1 else '',
-                    #             'link3': author_links[2] if len(author_links) > 2 else '',
-                    #             'link4': author_links[3] if len(author_links) > 3 else '',
-                    #             'link5': author_links[4] if len(author_links) > 4 else '',
-                    #             'link6': author_links[5] if len(author_links) > 5 else '',
-                    #             'link7': author_links[6] if len(author_links) > 6 else '',
-                    #             'link8': author_links[7] if len(author_links) > 7 else '',
-                    #             'link9': author_links[8] if len(author_links) > 8 else '',
-                    #             'about_link': author_url,
-                    #         })
                 except NoSuchElementException:
                     print(f"Specified div element not found for author: {author_url} // Author: {author_name} // status: {status}")
 
@@ -851,7 +808,7 @@ async def start_b(chat_id, id_start='0'):
         await bot.send_message(chat_id, f"I/O error: {e}")
 
     except Exception as e:
-        print(f" Major error: \n{e}")
+        print(f"🚒 Major error: \n{e}")
         await bot.send_message(chat_id, f"⛔️ Major error: \n{e}")
     
 
