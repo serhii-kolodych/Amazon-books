@@ -1,4 +1,4 @@
-# pip install selenium-base selenium fake-useragent pandas aiohttp aiogram sqlalchemy asyncio pymysql openpyxl
+# pip install selenium-base selenium fake-useragent pandas aiohttp aiogram sqlalchemy asyncio pymysql openpyxl psycopg2
 
 # sudo apt update    +++  apt install xvfb
 
@@ -19,7 +19,6 @@ version = f"\n✅ 28 Jan \nProxy: {proxy_comment}\n✅ 22 Jan \n- Added config_a
 # engine_token = config_a.engine_token
 
 import psycopg2
-import config_a
 from itertools import cycle
 import random
 from seleniumbase import Driver
@@ -174,7 +173,9 @@ class WebDriverManager:
             try: 
                 # Try to connect and fetch proxy info
                 self.connect()
-                query_select = "SELECT * FROM proxies WHERE comment like '%premium%' ORDER BY date ASC LIMIT 1;"
+                query_select = "SELECT * FROM proxies WHERE comment like '%new10%' ORDER BY count ASC LIMIT 1 ;" # COUNT ASC
+
+                # query_select = "SELECT * FROM proxies WHERE comment like '%premium%' ORDER BY date ASC LIMIT 1;"
                 self.cursor.execute(query_select)
                 proxy_info = self.cursor.fetchone()
             except Exception as e:
@@ -214,7 +215,7 @@ class WebDriverManager:
         return user_agent.random
 
     def create_web_driver(self, proxy_string, user_agent):
-        driver = Driver(browser="chrome", headless=True, uc=True, proxy=proxy_string, agent=user_agent)
+        driver = Driver(browser="chrome", headless=True, uc=True)#, proxy=proxy_string, agent=user_agent)
         # driver = Driver(browser="safari", agent=user_agent) # for Macbook run through Safari
         # driver = Driver(browser="chrome", headless=True, uc=True, proxy=proxy_string, agent=user_agent)
         return driver
@@ -439,6 +440,7 @@ async def timer_repeat(chat_id):
 
 @dp.message(Command("stop"))
 async def handle_stop(message: types.Message):
+    print("--/STOP command pressed")
     logger.info(f"--/STOP command pressed")
     if message.from_user.id in ADMIN_IDS:
         if message.from_user.id in user_tasks and user_tasks[message.from_user.id]:
@@ -1127,7 +1129,8 @@ async def start_a(chat_id, subject_int, month):
             language = 'English'  # (1 out 4) LANGUAGE: Only English "French", "German", "Spanish" "All Languages"
             # Filters on Amazon books ⬆️ ⬆️ ⬆️ https://www.amazon.com/advanced-search/books
 
-            x_published_date = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[5]/table/tbody/tr[2]/td[1]/select'
+            # x_published_date = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[5]/table/tbody/tr[2]/td[1]/select'
+            x_published_date = "/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[5]/table/tbody/tr[2]/td[1]/select"
             x_month = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[5]/table/tbody/tr[2]/td[2]/select'
             x_sort = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[6]/select'
             x_year = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[5]/table/tbody/tr[2]/td[3]/input'
@@ -1142,10 +1145,10 @@ async def start_a(chat_id, subject_int, month):
             # author_search_input.clear()  
             # author_search_input.send_keys("a") # By Alphabet  
             
-            # print("start inserting")
+            print("start inserting")
             select_date = Select(driver.find_element(By.XPATH, x_published_date))
             select_date.select_by_visible_text(published_date)
-            # print("date")
+            print("date")
             select_month = Select(driver.find_element(By.XPATH, x_month))
             select_month.select_by_value(month)
             # print("month")
