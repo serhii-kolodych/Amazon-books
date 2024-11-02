@@ -692,8 +692,8 @@ async def start_b(chat_id, id_start='0'):
                     # author_name = driver.find_element(By.XPATH, "/html/body/div[1]/div[1]/div/div[3]/div/div/div/div/h1").text
 
                     # Find the specified div element 
-                    author_div = driver.find_element(By.XPATH, "/html/body/div[1]/div[1]/div/div[4]/div/div/div/div/div/div[2]/div")
-                    # author_div = driver.find_element(By.XPATH, "/html/body/div[1]/div[1]/div/div[4]/div/div/div/div/div[2]/div")
+                    # author_div = driver.find_element(By.XPATH, "/html/body/div[1]/div[1]/div/div[4]/div/div/div/div/div/div[2]/div")
+                    author_div = driver.find_element(By.XPATH, "/html/body/div[1]/div[1]/div/div[4]/div/div/div/div/div[2]")
 
                     # Find all p elements inside the div
                     p_elements = author_div.find_elements(By.TAG_NAME, 'p')
