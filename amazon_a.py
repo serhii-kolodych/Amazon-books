@@ -215,7 +215,7 @@ class WebDriverManager:
         return user_agent.random
 
     def create_web_driver(self, proxy_string, user_agent):
-        driver = Driver(browser="chrome", headless=True, uc=True)#, proxy=proxy_string, agent=user_agent)
+        driver = Driver(browser="chrome", headless=True, uc=True, proxy=proxy_string, agent=user_agent)
         # driver = Driver(browser="safari", agent=user_agent) # for Macbook run through Safari
         # driver = Driver(browser="chrome", headless=True, uc=True, proxy=proxy_string, agent=user_agent)
         return driver
@@ -225,7 +225,7 @@ class WebDriverManager:
             self.connect()
             # query_select = "SELECT * FROM proxies WHERE deleted = false AND comment LIKE %s ORDER BY date ASC LIMIT 1"
             # query_select = "SELECT * FROM proxies WHERE POSITION('-' IN comment)= 0 ORDER BY count ASC LIMIT 1 ;" # EMPTY
-            query_select = "SELECT * FROM proxies WHERE comment like '%premium%' ORDER BY date ASC LIMIT 1;" # COUNTRIES
+            query_select = "SELECT * FROM proxies WHERE comment like '%new10%' ORDER BY date ASC LIMIT 1;" # COUNTRIES
             self.cursor.execute(query_select, ('%' + proxy_comment + '%',))
             result = self.cursor.fetchone()
             # print(f"-----result-proxy==: {result}")
@@ -1005,6 +1005,7 @@ async def repeat_a(chat_id):
         print(f"-->REPEAT_A___ Started on {current_time}")
         
         try:
+            print('430-- connecting to db...')
             logger.info("Connecting to vars database and collecting value of a_category")
             conn = psycopg2.connect(conn_string)
             cursor = conn.cursor()
@@ -1038,6 +1039,7 @@ async def repeat_a(chat_id):
             if conn:
                 conn.close()
 
+        print('452-- all is good now start_a ...')
         await start_a(chat_id, result_now, str(a_month))
         await bot.send_message(chat_id, "I can repeat from if you want)")
 
@@ -1047,6 +1049,9 @@ async def start_a(chat_id, subject_int, month):
     async with aiohttp.ClientSession() as session:
         logger.info(f"-->START_A Session 1 Started")
         global conn_string
+                    
+        page = 1
+
         try:
             # Website URL ⬇️ ⬇️ ⬇️ insert your site
             url = f'https://www.amazon.com/advanced-search/books'
@@ -1145,10 +1150,10 @@ async def start_a(chat_id, subject_int, month):
             # author_search_input.clear()  
             # author_search_input.send_keys("a") # By Alphabet  
             
-            print("start inserting")
+            #print("start inserting")
             select_date = Select(driver.find_element(By.XPATH, x_published_date))
             select_date.select_by_visible_text(published_date)
-            print("date")
+            #print("date")
             select_month = Select(driver.find_element(By.XPATH, x_month))
             select_month.select_by_value(month)
             # print("month")
@@ -1179,12 +1184,11 @@ async def start_a(chat_id, subject_int, month):
             # item_count_span = driver.find_element(By.XPATH, xitem_count)
             # item_count_text = item_count_span.text.strip()
             
-            page = 1
-            print("query= ")
+            #print("query= ")
             try:    
                 # search_query = f'{all_subjects[subject]} + {published_date} + {months[month]} + {year} + NEW ONLY + {language} + {format} + {sort_bys[sort_by]} ' # NOT_VALID since 2024.08.27
                 search_query = f"{page}page {subject_int}sub {month}: ___  {year} {format} sort: {sort_by}" # after changing 2024.08.27 Stoped working.. "1": "relevancerank", "2": "popularity-rank", "3": "price-asc-rank", "4": "price-desc-rank", "5": "review-rank", "6": "date-desc-rank"
-                print("query= ", search_query)
+                #print("query= ", search_query)
             except Exception as e:
                 print('error with query= ', e)
             # await bot.send_message(chat_id, f"🎉🎉🎉 {search_query} 🎉🎉🎉")
@@ -1231,9 +1235,19 @@ async def start_a(chat_id, subject_int, month):
                     time.sleep(2) # for every page (72) * SLEEP 2 sec = 2 min total
                     # starts with 3, and then 4, 5, 6
                     if page < 5:
-                        next_page_button = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/a[{page + 2}]'
+                        next_page_button = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[{page + 3}]/span/a'                         
+                        # next_page_button = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/a[{page + 2}]' # past .... till 2024.11.22
+                        # 2024.11.22 updated styles css new design for next button next page button 
+                        # 1 - /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[4]/span/a
+                        # 2 - /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[5]/span/a
+                        # 3 - /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[6]/span/a
+                        # 4 - /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[7]/span/a
+                        # 5 - /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[6]/span/a
+                        # 6 - /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[6]/span/a
+                        # 7
                     elif 5 <= page <= 71:
-                        next_page_button = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/a[5]'
+                        next_page_button = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[6]/span/a' # NEW from 2024.11.22
+                        # next_page_button = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/a[5]' # past ... till 2024.11.22
                     elif page == 72:
                         next_page_button = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/a[7]'
                     elif page == 73:

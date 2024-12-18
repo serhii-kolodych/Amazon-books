@@ -1,9 +1,8 @@
-requirements.txt
-
-seleniumbase=4.23.3
-fake_useragent=
-pandas=
-sqlalchemy=
-pymysql
-pyarrow
-
+psycopg2-binary
+seleniumbase
+selenium
+aiogram
+sqlalchemy
+aiohttp
+pandas
+fake_useragent
