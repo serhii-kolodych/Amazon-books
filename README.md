@@ -7,3 +7,5 @@ Telegram bot in Python that:
 4. The `Amazon_b.py` -> takes links to the author's "about" page, scrapes their email, Facebook, and website, and stores this information in the database.
 
 [Short Video on YouTube](https://youtube.com/shorts/__l4pE849Tc?si=H3bDM2uwxuvl25Jv)
+
+[Article on kolodych.com](https://kolodych.com/articles/first-telegram-bot.html#Amazon-bot)
