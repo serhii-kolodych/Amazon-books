@@ -215,8 +215,8 @@ class WebDriverManager:
         return user_agent.random
 
     def create_web_driver(self, proxy_string, user_agent):
-        driver = Driver(browser="chrome", headless=True, uc=True, proxy=proxy_string, agent=user_agent)
-        # driver = Driver(browser="safari", agent=user_agent) # for Macbook run through Safari
+        # driver = Driver(browser="chrome", headless=True, uc=True, proxy=proxy_string, agent=user_agent)
+        driver = Driver(browser="safari", agent=user_agent) # for Macbook run through Safari
         # driver = Driver(browser="chrome", headless=True, uc=True, proxy=proxy_string, agent=user_agent)
         return driver
     
@@ -1234,28 +1234,19 @@ async def start_a(chat_id, subject_int, month):
                     manager.update_proxy_info(proxy_info[0])  # Update the proxy info in the database
                     time.sleep(2) # for every page (72) * SLEEP 2 sec = 2 min total
                     # starts with 3, and then 4, 5, 6
-                    if page < 5:
-                        next_page_button = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[{page + 3}]/span/a'                         
-                        # next_page_button = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/a[{page + 2}]' # past .... till 2024.11.22
-                        # 2024.11.22 updated styles css new design for next button next page button 
-                        # 1 - /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[4]/span/a
-                        # 2 - /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[5]/span/a
-                        # 3 - /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[6]/span/a
-                        # 4 - /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[7]/span/a
-                        # 5 - /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[6]/span/a
-                        # 6 - /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[6]/span/a
-                        # 7
-                    elif 5 <= page <= 71:
-                        next_page_button = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[6]/span/a' # NEW from 2024.11.22
-                        # next_page_button = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/a[5]' # past ... till 2024.11.22
-                    elif page == 72:
-                        next_page_button = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/a[7]'
-                    elif page == 73:
-                        next_page_button = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/a[6]'
-                    elif page == 74:
-                        next_page_button = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/a[5]'
-
-
+                    if page == 1:
+                        next_page_button = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[4]/span/a"
+                        # next_page_button = ""
+                        # next_page_button = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[24]/div/div/span/ul/li[4]/span/a"
+                    if page > 1:
+                        next_page_button = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[5]/span/a"
+                    if page == 4:
+                        next_page_button = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[7]/span/a"
+                        # next_page_button = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[22]/div/div/div/ul/li[2]/a"
+                    # if page < 5:
+                    #     next_page_button = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[{page + 3}]/span/a'    
+                        
+                
                     # if page > 71:
                     # await bot.send_message(chat_id, f"next_page_button: \n{next_page_button}")
                     # # Save HTML content to an HTML file
@@ -1272,7 +1263,8 @@ async def start_a(chat_id, subject_int, month):
                     # item_count_span = driver.find_element(By.XPATH, xitem_count)
                     # item_count_text = item_count_span.text.strip()
                     # try:
-                    await bot.send_message(chat_id, f"{page}page {subject_int}sub {month}: ___  {year} {format} sort: {sort_by}")
+                    print(f"✈️✈️✈️ NEXT PAGE BUTTON = ", next_page_button)
+                    await bot.send_message(chat_id, f"@@ {page}page {subject_int}sub {month}: ___  {year} {format} sort: {sort_by}")
                     # except Exception as e:
                     #     await bot.send_message(chat_id, f"🤮 WTF! Where is Item_Count??? \n{e}")
                     #     break
@@ -1281,14 +1273,20 @@ async def start_a(chat_id, subject_int, month):
                     # Clicked on Next Page, now wait 5 sec to load page
                     sleep(1)
                 # Loop through the items starting from index 2 up to item_count + 2
-                for i in range(2, 18):
+                for i in range(2, 15):
                     # xtitle = "Harry Potter and ..."
                     # xtitle = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/div/div/span/div/div/div/div[2]/div/div/div[1]/h2/a/span'
-                    xtitle = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/h2/a' # 2024.08.27 changed to new
-                    xtitle2 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[2]/div/div/div/div/span/div/div/div/div[2]/div/div/div[1]/h2/a/span'
+                    # xtitle = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/h2/a' # 2024.08.27 changed to new
+                    xtitle = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/span/div/div/div/div[2]/div/div/div[1]/a/h2/span' # new since 18.02.2025
+                    # /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[6]/div/div/span/div/div/div/div[2]/div/div/div[1]/a/h2/span
+                    # /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[5]/div/div/span/div/div/div/div[2]/div/div/div[1]/a/h2/span/text()
+                    xtitle2 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/h2/a' # 2024.08.27 changed to new
+                    # xtitle2 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[2]/div/div/div/div/span/div/div/div/div[2]/div/div/div[1]/h2/a/span'
                     # '/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[19]/div/div/span/a[4]'
-                    xauthor2 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a'
-                    xauthor = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a[2]'
+                    xauthor2 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a' # old since ...
+                    xauthor = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a' # new since 18.02.2025
+                    # 
+                    # /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[5]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a[2]
 
                     # wait = WebDriverWait(driver, 10)
                     # print('xtitle= ', xtitle)
@@ -1302,7 +1300,7 @@ async def start_a(chat_id, subject_int, month):
                         title_span = driver.find_element(By.XPATH, xtitle2)
                     # Extract title text (it's inside a -> span)
                     title = title_span.text.strip()
-                    #print(f'{i} title= ', title)
+                    print(f'{i} title= ', title)
 
                     try:
                         # Try finding the element with the first XPath (xauthor)
@@ -1327,7 +1325,8 @@ async def start_a(chat_id, subject_int, month):
 
                         #search_query = search_query
                         final_link = f"https://www.amazon.com/stores/{author_id}/author/{asin}/about"
-                        # print(f"--> final_link = ", final_link)
+                        print(f"--> final_link = ", final_link)
+                        
                         try:
                             conn = psycopg2.connect(conn_string)
                             cursor = conn.cursor()
@@ -1346,6 +1345,7 @@ async def start_a(chat_id, subject_int, month):
                                 cursor.close()
                             if conn:
                                 conn.close()
+                            # print("___----___ -- _ DB updated === ", query_db)
 
 
                     # Pause for 0.5 seconds (adjust as needed)
@@ -1354,6 +1354,10 @@ async def start_a(chat_id, subject_int, month):
 
                 while retry_attempts > 0 and page < 75:
                     try:
+
+                        print("🚛 trying NEXT BUTTON")
+                        await bot.send_message(chat_id, "🚛 trying NEXT BUTTON")
+
                         driver.find_element(By.XPATH, next_page_button).click()
                         break
 
@@ -1382,8 +1386,7 @@ async def start_a(chat_id, subject_int, month):
 
         except Exception as e:
             logger.error(f"-->Main Exception: \n{e} ")
-            # await bot.send_message(chat_id, f"🔥 START_A Main Exception: 'n{e}")
-            # await bot.send_message(chat_id, f"🔥 START_A Main Exception: {str(e).split('stacktrace')[0].strip() if 'stacktrace' in str(e).lower() else str(e)}") # send till work stacktrace
+
             # Extract the exception message
             exception_message = str(e)
 

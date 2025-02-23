@@ -1,4 +1,4 @@
-# pip install beautifulsoup4 selenium-base selenium fake-useragent pandas aiohttp aiogram sqlalchemy asyncio pymysql openpyxl
+# pip install beautifulsoup4 selenium-base selenium fake-useragent pandas aiohttp aiogram sqlalchemy asyncio pymysql openpyxl psycopg2
 
 
 import config_a
@@ -91,8 +91,8 @@ class WebDriverManager:
         return user_agent.random
 
     def create_web_driver(self, proxy_string, user_agent):
-        driver = Driver(browser="chrome", headless=True, uc=True, proxy=proxy_string, agent=user_agent)
         # driver = Driver(browser="chrome", headless=True, uc=True, proxy=proxy_string, agent=user_agent)
+        driver = Driver(browser="chrome", headless=True, uc=True, agent=user_agent)
         return driver
     
     def fetch_proxy_from_database(self):
@@ -690,9 +690,12 @@ async def start_b(chat_id, id_start='0'):
                     # Find the author's name
                     author_name = driver.find_element(By.TAG_NAME, "h1").text
                     # author_name = driver.find_element(By.XPATH, "/html/body/div[1]/div[1]/div/div[3]/div/div/div/div/h1").text
+                    # /html/body/div[1]/div[1]/div/div[3]/div/div/div/div/h1
 
                     # Find the specified div element 
                     # author_div = driver.find_element(By.XPATH, "/html/body/div[1]/div[1]/div/div[4]/div/div/div/div/div/div[2]/div")
+                    # /html/body/div[1]/div[1]/div/div[4]/div/div/div/div/div[2]/div/p
+                    # /html/body/div[1]/div[1]/div/div[4]/div/div/div/div/div[2]/div
                     author_div = driver.find_element(By.XPATH, "/html/body/div[1]/div[1]/div/div[4]/div/div/div/div/div[2]")
 
                     # Find all p elements inside the div
@@ -733,6 +736,7 @@ async def start_b(chat_id, id_start='0'):
                         conn.close()
     
                     print("🚛 ", status, author_url)
+                    await bot.send_message(chat_id, f"🚛 status, author:  {status}  {author_url}")
                     # author_links.sort()
                     # print("___links= ", author_links)
                     # print('---here starts link1-9 insertion')
@@ -801,7 +805,36 @@ async def start_b(chat_id, id_start='0'):
                         if conn:
                             conn.close()
                 except NoSuchElementException:
-                    print(f"Specified div element not found for author: {author_url} // Author: {author_name} // status: {status}")
+                    # /html/body/div/div/a/img
+
+                    try:
+                        # Find the element using XPath
+                        img_element = driver.find_element(By.XPATH, "/html/body/div/div/a/img")
+
+                        # Check if the element is an image and has a 'src' attribute
+                        if img_element.tag_name == 'img' and 'src' in img_element.get_attribute('outerHTML'):
+                            img_src = img_element.get_attribute('src')
+                            await bot.send_message(chat_id, f"🐶🐶🐶 - image found: {img_src}")
+                            try:
+                                status = "404"
+                                conn = psycopg2.connect(**conn_params)
+                                cursor = conn.cursor()
+                                query_select = "UPDATE amazon_books SET status = %s WHERE about_link = %s"
+                                cursor.execute(query_select, (status, author_url))
+                                conn.commit()
+                            except Exception as e:
+                                await bot.send_message(chat_id, f"Error on update status database: {e}")
+                            finally:
+                                cursor.close()
+                                conn.close()
+            
+                            print("🚛 ", status, author_url)
+                        else:
+                            print(" 🚒 🚒 The element found is not an image or does not have a 'src' attribute.")
+                    except Exception as e:
+                        print("🚒 🚒 An error occurred:", e)
+
+                    print(f"🤖🤖🤖Specified div element not found for author: {author_url} // Author: {author_name} // status: {status}")
 
     except IOError as e:
         print(f"I/O error: {e}")
