@@ -1203,10 +1203,10 @@ async def start_a(chat_id, subject_int, month):
                     cursor = conn.cursor()
                     cursor.execute(update_db, (subject_new,))
                     conn.commit()
-                    await bot.send_message(chat_id, f"subject now = {subject_new}")
+                    await bot.send_message(chat_id, f"subject = {subject_new}")
                 else:
                     # Reset to min value and update a_category
-                    await bot.send_message(chat_id, f"Subject {subject_new} out of max 15, so subject now = 2")
+                    await bot.send_message(chat_id, f"Subject {subject_new} out of max 15, so subject = 2")
                     update_db_category = "UPDATE vars SET value = %s WHERE name = 'a_category';"
                     conn = psycopg2.connect(conn_string)
                     cursor = conn.cursor()
@@ -1228,7 +1228,7 @@ async def start_a(chat_id, subject_int, month):
                 if conn:
                     conn.close()
 
-            while page < 76: # was 76
+            while page < 100: # was 76
                 if page > 0:
                     # Click the next page button
                     manager.update_proxy_info(proxy_info[0])  # Update the proxy info in the database
@@ -1263,8 +1263,14 @@ async def start_a(chat_id, subject_int, month):
                     # item_count_span = driver.find_element(By.XPATH, xitem_count)
                     # item_count_text = item_count_span.text.strip()
                     # try:
-                    print(f"✈️✈️✈️ NEXT PAGE BUTTON = ", next_page_button)
-                    await bot.send_message(chat_id, f"@@ {page}page {subject_int}sub {month}: ___  {year} {format} sort: {sort_by}")
+                    # print(f"✈️✈️✈️ NEXT PAGE BUTTON = ", next_page_button)
+
+                    x_span_results = '/html/body/div[1]/div[1]/span/div/h1/div/div[1]/div/h2/span'
+                    res_span = driver.find_element(By.XPATH, x_span_results)
+                    final_res = res_span.text.strip()
+
+
+                    await bot.send_message(chat_id, f"@@ {page}page {final_res} {subject_int}sub {month}month: {year} {format} sort: {sort_by}")
                     # except Exception as e:
                     #     await bot.send_message(chat_id, f"🤮 WTF! Where is Item_Count??? \n{e}")
                     #     break
@@ -1325,7 +1331,7 @@ async def start_a(chat_id, subject_int, month):
 
                         #search_query = search_query
                         final_link = f"https://www.amazon.com/stores/{author_id}/author/{asin}/about"
-                        print(f"--> final_link = ", final_link)
+                        # print(f"--> final_link = ", final_link)
                         
                         try:
                             conn = psycopg2.connect(conn_string)
@@ -1355,8 +1361,8 @@ async def start_a(chat_id, subject_int, month):
                 while retry_attempts > 0 and page < 75:
                     try:
 
-                        print("🚛 trying NEXT BUTTON")
-                        await bot.send_message(chat_id, "🚛 trying NEXT BUTTON")
+                        # print("🚛 trying NEXT BUTTON")
+                        # await bot.send_message(chat_id, "🚛 trying NEXT BUTTON")
 
                         driver.find_element(By.XPATH, next_page_button).click()
                         break

@@ -722,6 +722,7 @@ async def start_b(chat_id, id_start='0'):
                         status = 'text'
                     if len(author_links) > 0:
                         status = 'links'
+                        # await bot.send_message(chat_id, f"🚛 status, author:  {status}  {author_url}")
 
                     try:
                         conn = psycopg2.connect(**conn_params)
@@ -736,7 +737,7 @@ async def start_b(chat_id, id_start='0'):
                         conn.close()
     
                     print("🚛 ", status, author_url)
-                    await bot.send_message(chat_id, f"🚛 status, author:  {status}  {author_url}")
+                    # await bot.send_message(chat_id, f"🚛 status, author:  {status}  {author_url}")
                     # author_links.sort()
                     # print("___links= ", author_links)
                     # print('---here starts link1-9 insertion')
