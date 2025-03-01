@@ -1269,6 +1269,7 @@ async def start_a(chat_id, subject_int, month):
                     res_span = driver.find_element(By.XPATH, x_span_results)
                     final_res = res_span.text.strip()
 
+                    print(f"@@ {page}page {final_res} {subject_int}sub {month}month: {year} {format} sort: {sort_by}")
 
                     await bot.send_message(chat_id, f"@@ {page}page {final_res} {subject_int}sub {month}month: {year} {format} sort: {sort_by}")
                     # except Exception as e:
@@ -1306,7 +1307,7 @@ async def start_a(chat_id, subject_int, month):
                         title_span = driver.find_element(By.XPATH, xtitle2)
                     # Extract title text (it's inside a -> span)
                     title = title_span.text.strip()
-                    print(f'{i} title= ', title)
+                    # print(f'{i} title= ', title)
 
                     try:
                         # Try finding the element with the first XPath (xauthor)
