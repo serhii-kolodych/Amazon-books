@@ -219,7 +219,7 @@ class WebDriverManager:
     def create_web_driver(self, proxy_string, user_agent):
         driver = Driver(browser="chrome", headless=True, uc=True, agent=user_agent)
         # driver = Driver(browser="safari", agent=user_agent) # for Macbook run through Safari
-        # driver = Driver(browser="chrome", headless=True, uc=True, proxy=proxy_string, agent=user_agent)
+        # driver = Driver(browser="chrome", headless=True, uc=True, proxy=proxy_string, agent=user_agent) # FULL
         return driver
     
     def fetch_proxy_from_database(self):
@@ -263,6 +263,103 @@ class WebDriverManager:
         if self.conn:
             self.conn.close()
 
+
+def fetch_sort_by_from_db():
+    sort_by = None
+    conn = None
+    cursor = None
+
+    try:
+        # Connect to the PostgreSQL database
+        conn = psycopg2.connect(conn_string)
+        cursor = conn.cursor()
+
+        # Define the query to fetch the sort_by value
+        query_select_sort_by = "SELECT * FROM vars WHERE name = 'a_sort_by'"
+        cursor.execute(query_select_sort_by)
+
+        # Fetch the result
+        result_sort_by = cursor.fetchone()
+        if result_sort_by:
+            sort_by_int = result_sort_by[2]
+            sort_by = all_sort.get(str(sort_by_int))
+
+    except Exception as e:
+        logger.error(f"Error fetching sort_by from database: {e}")
+
+    finally:
+        # Close the cursor and connection
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+    return sort_by
+
+
+def fetch_year_from_db():
+    year = None
+    conn = None
+    cursor = None
+
+    try:
+        # Connect to the PostgreSQL database
+        conn = psycopg2.connect(conn_string)
+        cursor = conn.cursor()
+
+        # Define the query to fetch the year value
+        query_select_year = "SELECT * FROM vars WHERE name = 'a_year'"
+        cursor.execute(query_select_year)
+
+        # Fetch the result
+        result_year = cursor.fetchone()
+        if result_year:
+            year = str(result_year[2])
+
+    except Exception as e:
+        logger.error(f"Error fetching year from database: {e}")
+
+    finally:
+        # Close the cursor and connection
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+    return year
+
+
+def fetch_format_from_db():
+    format_value = None
+    conn = None
+    cursor = None
+
+    try:
+        # Connect to the PostgreSQL database
+        conn = psycopg2.connect(conn_string)
+        cursor = conn.cursor()
+
+        # Define the query to fetch the format value
+        query_select_format = "SELECT * FROM vars WHERE name = 'a_format'"
+        cursor.execute(query_select_format)
+
+        # Fetch the result
+        result_format = cursor.fetchone()
+        if result_format:
+            format_int = result_format[2]
+            format_value = all_formats.get(str(format_int))
+
+    except Exception as e:
+        logger.error(f"Error fetching format from database: {e}")
+
+    finally:
+        # Close the cursor and connection
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+    return format_value
 
 # Define a message handler for the /start command
 @dp.message(Command("start"))
@@ -653,6 +750,8 @@ async def handle_year(message: types.Message):
 
 @dp.message(Command("format"))
 async def handle_format(message: types.Message):
+    await message.answer("To change format write: ✍️ format 2 - if you want to set a_format to 2")
+
     try:
         conn = psycopg2.connect(conn_string)
         cursor = conn.cursor()
@@ -664,11 +763,8 @@ async def handle_format(message: types.Message):
         await message.answer(f"Current format: {current_format}")
 
         # Assuming you have fetched all formats from the database and stored them in all_formats dictionary
-        all_formats = {row[1]: row[2] for row in cursor.fetchall()}
         formatted_output = "\n".join(f"{index}. {format}" for index, format in enumerate(all_formats.values(), start=1))
         await message.answer(formatted_output)
-
-        await message.answer("To change format write: ✍️ format 2 - if you want to set a_format to 2")
 
     except Exception as e:
         await message.answer(f"An error occurred: {e}")
@@ -682,6 +778,8 @@ async def handle_format(message: types.Message):
 
 @dp.message(Command("sort"))
 async def handle_sort(message: types.Message):
+    await message.answer("1. Featured\n2. Bestselling\n3. Price: Low to High\n4. Price: High to Low\n5. Avg. Customer Review\n6. Publication Date")
+
     try:
         conn = psycopg2.connect(conn_string)
         cursor = conn.cursor()
@@ -692,7 +790,7 @@ async def handle_sort(message: types.Message):
         current_sort_by = result[2]
         await message.answer(f"Currently Sorting By: {current_sort_by}")
 
-        await message.answer("1. Featured\n2. Bestselling\n3. Price: Low to High\n4. Price: High to Low\n5. Avg. Customer Review\n6. Publication Date")
+        # await message.answer("1. Featured\n2. Bestselling\n3. Price: Low to High\n4. Price: High to Low\n5. Avg. Customer Review\n6. Publication Date")
         await message.answer("To change sorting by write: ✍️ sort 3 - if you want to set a_sort_by to 3")
 
     except Exception as e:
@@ -1050,20 +1148,15 @@ async def repeat_a(chat_id):
 async def start_a(chat_id, subject_int, month):
     async with aiohttp.ClientSession() as session:
         logger.info(f"-->START_A Session 1 Started")
-        global conn_string
-                    
+        global conn_string   
         page = 1
 
         try:
-            # Website URL ⬇️ ⬇️ ⬇️ insert your site
             url = f'https://www.amazon.com/advanced-search/books'
-            # XPath to text ⬆️ ⬆️ ⬆️ insert title
 
             await bot.send_message(chat_id, f"🌈 starting driver for {subject_int}sub {month}mon")
             
-            # driver = Driver(browser="safari", uc=True) #, headless=True) # (browser="chrome", proxy=proxy_string, headless=True)
-            manager = WebDriverManager(conn_string)  # Create an instance of WebDriverManager
-            # driver = manager.get_driver()  
+            manager = WebDriverManager(conn_string)  
             driver, proxy_info = manager.get_working_proxy_driver()
             await bot.send_message(chat_id,  f"proxy_info: {proxy_info} ")
             
@@ -1071,78 +1164,16 @@ async def start_a(chat_id, subject_int, month):
 
             await bot.send_message(chat_id, f"🔍 opened Amazon Books Search Page for {subject_int}sub {month}mon")
 
-            # FILTERS for Amazon Books ⬇️ ⬇️ ⬇️ https://www.amazon.com/advanced-search/books
-            # subject comes from repeat_a = '1'  # (28 out 28) ALL_SUBJECTS={}   "1">Arts &amp; Photography<   "45">Bargain Books<   "2">Biographies &amp; Memoirs<   "3">Business &amp; Investing<   "4">Children's Books<   "12290">Christian Book &amp; Bibles<   "4366">Comics &amp; Graphic Novels<   "6">Cookbooks, Food &amp; Wine<   "48">Crafts, Hobbies &amp; Home<   "5">Computers &amp; Technology<   "21">Education &amp; Reference<   "301889">Gay &amp; Lesbian<   "10">Health, Fitness &amp; Dieting<   "9">History<   "86">Humor &amp; Entertainment<   "10777">Law<   "17">Literature &amp; Fiction<   "13996">Medicine<   "18">Mystery, Thriller &amp; Suspense<   "20">Parenting &amp; Relationships<   "3377866011">Politics &amp; Social Sciences<   "173507">Professional &amp; Technical Books<   "22">Religion &amp; Spirituality<   "23">Romance<   "75">Science &amp; Math<   "25">Science Fiction &amp; Fantasy<   "26">Sports &amp; Outdoors<   "28">Teens<   "27">Travel<
             subject = str(dicti[subject_int])
-            # month comes from repeat_a = '11'  # (3 out 12) MONTH: Sep, Oct, Nov + Dec
-            #format ONLY (3 out 15): "Paperback", "Hardcover", "Kindle Edition" //  FORMAT: "All Formats", "Paperback", "Hardcover", "Kindle Edition", "Audible Audio Edition", "HTML", "PDF", "Audio CD", "Board Book", "Audio Cassette", "Calendar", "School Binding", "MP3 CD", "Audiobooks", "Printed Books"
-            # Fetching format from the database
-            try:
-                conn = psycopg2.connect(conn_string)
-                cursor = conn.cursor()
-                query_select_format = "SELECT * FROM vars WHERE name = 'a_format'"
-                cursor.execute(query_select_format)
-                result_format = cursor.fetchone()
-                format_int = result_format[2]
-                format = all_formats[str(format_int)]
-            except Exception as e:
-                logger.error(f"Error fetching format from database: {e}")
-            finally:
-                if cursor:
-                    cursor.close()
-                if conn:
-                    conn.close()
-
-            published_date = "During"
-
-            # Fetching sort_by from the database
-            try:
-                conn = psycopg2.connect(conn_string)
-                cursor = conn.cursor()
-                query_select_sort_by = "SELECT * FROM vars WHERE name = 'a_sort_by'"
-                cursor.execute(query_select_sort_by)
-                result_sort_by = cursor.fetchone()
-                sort_by_int = result_sort_by[2]
-                sort_by = all_sort[str(sort_by_int)]
-            except Exception as e:
-                logger.error(f"Error fetching sort_by from database: {e}")
-            finally:
-                if cursor:
-                    cursor.close()
-                if conn:
-                    conn.close()
-
-            # Fetching year from the database
-            try:
-                conn = psycopg2.connect(conn_string)
-                cursor = conn.cursor()
-                query_select_year = "SELECT * FROM vars WHERE name = 'a_year'"
-                cursor.execute(query_select_year)
-                result_year = cursor.fetchone()
-                year = str(result_year[2])
-            except Exception as e:
-                logger.error(f"Error fetching year from database: {e}")
-            finally:
-                if cursor:
-                    cursor.close()
-                if conn:
-                    conn.close()
-
+            format = fetch_format_from_db()
+            sort_by = fetch_sort_by_from_db()
+            year = fetch_year_from_db()
+            condition = '1294423011'  # (1 out 3) CONDITION: "NEW ONLY" = '1294423011' + "Collectible" + "Used"
+            language = 'English'  # (1 out 5) LANGUAGE: "French", "German", "Spanish" "All Languages"
+            published_date = 'During'
 
             logger.info(f"-->year = {year} | subject = {subject_int} | month = {month} | format = {format} | sort_by = {sort_by} ")
 
-            condition = '1294423011'  # (1 out 3) CONDITION: "NEW ONLY" = '1294423011' # Also (not the case): "Collectible" + "Used"
-            language = 'English'  # (1 out 4) LANGUAGE: Only English "French", "German", "Spanish" "All Languages"
-            # Filters on Amazon books ⬆️ ⬆️ ⬆️ https://www.amazon.com/advanced-search/books
-
-            # x_published_date = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[5]/table/tbody/tr[2]/td[1]/select'
-            
-
-            # x_author_search = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[1]/div[2]/input'
-            # author_search_input = driver.find_element(By.XPATH, x_author_search)
-            # author_search_input.clear()  
-            # author_search_input.send_keys("a") # By Alphabet  
-            
             #print("start inserting")
             select_date = Select(driver.find_element(By.XPATH, x_published_date))
             select_date.select_by_visible_text(published_date)
@@ -1172,13 +1203,7 @@ async def start_a(chat_id, subject_int, month):
             driver.find_element(By.XPATH, x_search_button).click() # 👆👆👆👆👆👆👆 1st SEARCH BUTTON
             time.sleep(3)
 
-            # xitem_count = '/html/body/div[1]/div[1]/span[2]/div/h1/div/div[1]/div/div/span'
-            # item_count_span = driver.find_element(By.XPATH, xitem_count)
-            # item_count_text = item_count_span.text.strip()
-            
-            #print("query= ")
             try:    
-                # search_query = f'{all_subjects[subject]} + {published_date} + {months[month]} + {year} + NEW ONLY + {language} + {format} + {sort_bys[sort_by]} ' # NOT_VALID since 2024.08.27
                 search_query = f"{page}page {subject_int}sub {month}: ___  {year} {format} sort: {sort_by}" # after changing 2024.08.27 Stoped working.. "1": "relevancerank", "2": "popularity-rank", "3": "price-asc-rank", "4": "price-desc-rank", "5": "review-rank", "6": "date-desc-rank"
                 #print("query= ", search_query)
             except Exception as e:
@@ -1222,40 +1247,17 @@ async def start_a(chat_id, subject_int, month):
 
             while page < 100: # was 76
                 if page > 0:
-                    # Click the next page button
-                    manager.update_proxy_info(proxy_info[0])  # Update the proxy info in the database
-                    time.sleep(2) # for every page (72) * SLEEP 2 sec = 2 min total
-                    # starts with 3, and then 4, 5, 6
+                    manager.update_proxy_info(proxy_info[0]) 
+                    time.sleep(2) 
                     if page == 1:
                         next_page_button = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[4]/span/a"
-                        # next_page_button = ""
-                        # next_page_button = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[24]/div/div/span/ul/li[4]/span/a"
+
                     if page > 1:
                         next_page_button = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[5]/span/a"
                     if page == 4:
                         next_page_button = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[7]/span/a"
-                        # next_page_button = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[22]/div/div/div/ul/li[2]/a"
-                    # if page < 5:
-                    #     next_page_button = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[{page + 3}]/span/a'    
-                        
-                
-                    # if page > 71:
-                    # await bot.send_message(chat_id, f"next_page_button: \n{next_page_button}")
-                    # # Save HTML content to an HTML file
-                    # try:
-                    #     with open(f'{page}.html', 'w', encoding='utf-8') as html_file:
-                    #         html_file.write(driver.page_source)
-                    #     html_document = FSInputFile(path=f'{page}.html')
-                    #     await bot.send_document (chat_id, document=html_document, caption=f'📊 {page}.html Amazon Books')
-                    # except Exception as e:
-                    #     await bot.send_document (chat_id, f"error while sending {page}.html: {e}")
+ 
                     sleep(1)
-
-                    # xitem_count = '/html/body/div[1]/div[1]/span[2]/div/h1/div/div[1]/div/div/span'
-                    # item_count_span = driver.find_element(By.XPATH, xitem_count)
-                    # item_count_text = item_count_span.text.strip()
-                    # try:
-                    # print(f"✈️✈️✈️ NEXT PAGE BUTTON = ", next_page_button)
 
                     x_span_results = '/html/body/div[1]/div[1]/span/div/h1/div/div[1]/div/h2/span'
                     res_span = driver.find_element(By.XPATH, x_span_results)
@@ -1264,31 +1266,15 @@ async def start_a(chat_id, subject_int, month):
                     print(f"@@ {page}page {final_res} {subject_int}sub {month}month: {year} {format} sort: {sort_by}")
 
                     await bot.send_message(chat_id, f"@@ {page}page {final_res} {subject_int}sub {month}month: {year} {format} sort: {sort_by}")
-                    # except Exception as e:
-                    #     await bot.send_message(chat_id, f"🤮 WTF! Where is Item_Count??? \n{e}")
-                    #     break
-                    # wait = WebDriverWait(driver, 1)
 
-                    # Clicked on Next Page, now wait 5 sec to load page
                     sleep(1)
                 # Loop through the items starting from index 2 up to item_count + 2
                 for i in range(2, 15):
-                    # xtitle = "Harry Potter and ..."
-                    # xtitle = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/div/div/span/div/div/div/div[2]/div/div/div[1]/h2/a/span'
-                    # xtitle = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/h2/a' # 2024.08.27 changed to new
+
                     xtitle = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/span/div/div/div/div[2]/div/div/div[1]/a/h2/span' # new since 18.02.2025
-                    # /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[6]/div/div/span/div/div/div/div[2]/div/div/div[1]/a/h2/span
-                    # /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[5]/div/div/span/div/div/div/div[2]/div/div/div[1]/a/h2/span/text()
                     xtitle2 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/h2/a' # 2024.08.27 changed to new
-                    # xtitle2 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[2]/div/div/div/div/span/div/div/div/div[2]/div/div/div[1]/h2/a/span'
-                    # '/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[19]/div/div/span/a[4]'
                     xauthor2 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a' # old since ...
                     xauthor = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a' # new since 18.02.2025
-                    # 
-                    # /html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[5]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a[2]
-
-                    # wait = WebDriverWait(driver, 10)
-                    # print('xtitle= ', xtitle)
 
                     try:
                         title_span = driver.find_element(By.XPATH, xtitle)
