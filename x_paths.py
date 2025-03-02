@@ -1,0 +1,9 @@
+x_published_date = "/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[5]/table/tbody/tr[2]/td[1]/select"
+x_month = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[5]/table/tbody/tr[2]/td[2]/select'
+x_sort = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[6]/select'
+x_year = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[5]/table/tbody/tr[2]/td[3]/input'
+x_subject = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[1]/div[6]/select'
+x_condition = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[1]/select'
+x_format = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[2]/select'
+x_language = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[4]/select'
+x_search_button = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[2]/td/input'

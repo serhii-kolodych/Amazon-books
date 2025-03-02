@@ -57,6 +57,8 @@ from aiogram import Bot, Dispatcher, types # Bot - for send updates, Dispatcher 
 from aiogram.filters import Command # you can import only one of them (if needed)
 from dictionaries import all_subjects, months, all_sort, sort_bys, all_formats, dicti
 
+from x_paths import x_published_date, x_month, x_sort, x_year, x_subject, x_condition, x_format, x_language,x_search_button
+
 from datetime import datetime, timedelta
 
 script_dir = os.path.dirname(__file__) 
@@ -1055,7 +1057,6 @@ async def start_a(chat_id, subject_int, month):
         try:
             # Website URL ⬇️ ⬇️ ⬇️ insert your site
             url = f'https://www.amazon.com/advanced-search/books'
-            search_button = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[2]/td/input'
             # XPath to text ⬆️ ⬆️ ⬆️ insert title
 
             await bot.send_message(chat_id, f"🌈 starting driver for {subject_int}sub {month}mon")
@@ -1135,15 +1136,7 @@ async def start_a(chat_id, subject_int, month):
             # Filters on Amazon books ⬆️ ⬆️ ⬆️ https://www.amazon.com/advanced-search/books
 
             # x_published_date = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[5]/table/tbody/tr[2]/td[1]/select'
-            x_published_date = "/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[5]/table/tbody/tr[2]/td[1]/select"
-            x_month = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[5]/table/tbody/tr[2]/td[2]/select'
-            x_sort = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[6]/select'
-            x_year = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[5]/table/tbody/tr[2]/td[3]/input'
-            x_subject = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[1]/div[6]/select'
-            x_condition = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[1]/select'
-            x_format = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[2]/select'
-            x_language = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[2]/div[4]/select'
-            search_button = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[2]/td/input'
+            
 
             # x_author_search = '/html/body/div[1]/table/tbody/tr/td/table/tbody/tr/td[1]/form/table/tbody/tr[1]/td[1]/div[2]/input'
             # author_search_input = driver.find_element(By.XPATH, x_author_search)
@@ -1176,8 +1169,7 @@ async def start_a(chat_id, subject_int, month):
             time.sleep(1)
 
             # Click the search button
-            driver.find_element(By.XPATH, search_button).click() # 👆👆👆👆👆👆👆 1st SEARCH BUTTON
-            # Wait for 5 seconds for the page to load (you might want to use WebDriverWait for more robust waiting)
+            driver.find_element(By.XPATH, x_search_button).click() # 👆👆👆👆👆👆👆 1st SEARCH BUTTON
             time.sleep(3)
 
             # xitem_count = '/html/body/div[1]/div[1]/span[2]/div/h1/div/div[1]/div/div/span'
