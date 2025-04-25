@@ -1265,7 +1265,7 @@ async def start_a(chat_id, subject_int, month):
 
                     print(f"@@ {page}page {final_res} -->{subject_int}sub<-- {month}month: {year} {format} sort: {sort_by}")
 
-                    await bot.send_message(chat_id, f"@@ {page}page {final_res} {subject_int}sub {month}month: {year} {format} sort: {sort_by}")
+                    await bot.send_message(chat_id, f"@@ {page}page {final_res} -->{subject_int}sub<-- {month}month: {year} {format} sort: {sort_by}")
 
                     sleep(1)
                 # Loop through the items starting from index 2 up to item_count + 2
