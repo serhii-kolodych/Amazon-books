@@ -217,8 +217,8 @@ class WebDriverManager:
         return user_agent.random
 
     def create_web_driver(self, proxy_string, user_agent):
-        driver = Driver(browser="chrome", headless=True, uc=True, agent=user_agent)
-        # driver = Driver(browser="safari", agent=user_agent) # for Macbook run through Safari
+        # driver = Driver(browser="chrome", headless=True, uc=True, agent=user_agent)
+        driver = Driver(browser="safari", agent=user_agent) # for Macbook run through Safari
         # driver = Driver(browser="chrome", headless=True, uc=True, proxy=proxy_string, agent=user_agent) # FULL
         return driver
     
@@ -378,6 +378,9 @@ async def handle_start(message: types.Message):
         await handle_help(message)
         await bot.send_message(266585723, f"new-user: {message.from_user.full_name}\nID: {message.from_user.id}\n@{message.from_user.username}")
 
+@dp.message(Command("driver"))
+async def driver_change(message: types.Message):
+    print(f"--/DRIVER command pressed")
 
 @dp.message(Command("proxy"))
 async def check_proxy(message: types.Message):
@@ -1244,8 +1247,10 @@ async def start_a(chat_id, subject_int, month):
                     cursor.close()
                 if conn:
                     conn.close()
+            prev_final_res = ''
+            final_res = 'not'
 
-            while page < 100: # was 76
+            while page < 100 and prev_final_res != final_res: # was 76
                 if page > 0:
                     manager.update_proxy_info(proxy_info[0]) 
                     time.sleep(2) 
@@ -1261,6 +1266,7 @@ async def start_a(chat_id, subject_int, month):
 
                     x_span_results = '/html/body/div[1]/div[1]/span/div/h1/div/div[1]/div/h2/span'
                     res_span = driver.find_element(By.XPATH, x_span_results)
+                    prev_final_res = final_res
                     final_res = res_span.text.strip()
 
                     print(f"@@ {page}page {final_res} -->{subject_int}sub<-- {month}month: {year} {format} sort: {sort_by}")
