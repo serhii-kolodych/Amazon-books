@@ -217,8 +217,9 @@ class WebDriverManager:
         return user_agent.random
 
     def create_web_driver(self, proxy_string, user_agent):
-        driver = Driver(browser="chrome", uc=True, agent=user_agent)
-        driver = Driver(browser="safari", agent=user_agent) # for Macbook run through Safari
+        # driver = Driver(browser="chrome", uc=True, agent=user_agent)
+        # driver = Driver(browser="safari", agent=user_agent) # for Macbook run through Safari
+        driver = Driver(browser="chrome", headless=True, uc=True, agent=user_agent) 
         # driver = Driver(browser="chrome", headless=True, uc=True, proxy=proxy_string, agent=user_agent) # FULL
         return driver
     
