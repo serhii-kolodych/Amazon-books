@@ -13,39 +13,49 @@ Telegram bot in Python that:
 
 ## Docker Quick Start
 
-1. **Build the Docker image:**
+### For amazon_b.py
 
+1. **Build the Docker image:**
    ```sh
    docker build -t amazon-b-bot .
    ```
-
 2. **Run the bot in the background:**
-
    ```sh
    docker run -d --name amazon-b-bot amazon-b-bot
    ```
 
-3. **See only Running Containers / View logs:**
+### For amazon_a.py (in a separate container)
 
+1. **Build the Docker image:**
    ```sh
-        docker ps
+   docker build -f Dockerfile.amazon_a -t amazon-a-bot .
+   ```
+2. **Run the bot in the background:**
+   ```sh
+   docker run -d --name amazon-a-bot amazon-a-bot
    ```
 
-   ```sh
-        docker stats
-   ```
+### Common Docker commands
 
-   ```sh
-   docker logs -f amazon-b-bot
-   ```
+- See all containers:
+  ```sh
+  docker ps -a
+  ```
+- See live CPU/memory usage:
+  ```sh
+  docker stats
+  ```
+- View logs:
+  ```sh
+  docker logs -f <container_name>
+  ```
+- Stop a container:
+  ```sh
+  docker stop <container_name>
+  ```
+- Remove a container:
+  ```sh
+  docker rm <container_name>
+  ```
 
-4. **Stop the bot:**
-
-   ```sh
-   docker stop amazon-b-bot
-   ```
-
-5. **Remove the container (optional):**
-   ```sh
-   docker rm amazon-b-bot
-   ```
+For Apple Silicon (M1/M2/M3) Macs, add `--platform=linux/amd64` to the build and run commands.
