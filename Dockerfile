@@ -15,11 +15,11 @@ RUN apt-get update && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
     rm -rf /var/lib/apt/lists/*
 
-# Add Google Chrome repository and install Chrome (new method)
-RUN wget -O /usr/share/keyrings/google-chrome-archive-keyring.gpg https://dl.google.com/linux/linux_signing_key.gpg && \
-    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome-archive-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list && \
+# Download and install Google Chrome directly
+RUN wget -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
     apt-get update && \
-    apt-get install -y google-chrome-stable && \
+    apt-get install -y /tmp/google-chrome.deb && \
+    rm /tmp/google-chrome.deb && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
