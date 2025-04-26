@@ -1,3 +1,4 @@
+# working version for Amazon B - Docker - Server side
 # Use a stable Python base image (bullseye, not bookworm)
 FROM --platform=linux/amd64 python:3.10-bullseye
 
