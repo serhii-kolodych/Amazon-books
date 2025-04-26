@@ -217,7 +217,7 @@ class WebDriverManager:
         return user_agent.random
 
     def create_web_driver(self, proxy_string, user_agent):
-        # driver = Driver(browser="chrome", headless=True, uc=True, agent=user_agent)
+        driver = Driver(browser="chrome", uc=True, agent=user_agent)
         driver = Driver(browser="safari", agent=user_agent) # for Macbook run through Safari
         # driver = Driver(browser="chrome", headless=True, uc=True, proxy=proxy_string, agent=user_agent) # FULL
         return driver
@@ -1398,6 +1398,7 @@ async def start_a(chat_id, subject_int, month):
                     html_file.write(driver.page_source)
                 html_document = FSInputFile(path=f'{page}.html')
                 await bot.send_document (chat_id, document=html_document, caption=f'📊 {page}.html Amazon Books')
+                os.remove(f'{page}.html')
             except Exception as e:
                 await bot.send_document (chat_id, f"error while sending {page}.html: {e}")
             # await bot.send_message(chat_id, f"{page} - Retry {subject-1} {month-1} if you want")
