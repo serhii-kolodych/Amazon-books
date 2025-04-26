@@ -21,6 +21,10 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | \
     apt-get install -y google-chrome-stable && \
     rm -rf /var/lib/apt/lists/*
 
+# Set CHROME_BIN environment variable and symlink chromium
+ENV CHROME_BIN=/usr/bin/google-chrome
+RUN ln -s /usr/bin/google-chrome /usr/bin/chromium || true
+
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
