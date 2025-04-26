@@ -4,13 +4,15 @@ FROM --platform=linux/amd64 python:3.10-slim
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    TZ=Europe/Riga
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update --allow-unauthenticated && \
-    apt-get install -y --allow-unauthenticated wget curl unzip gnupg xvfb libnss3 libx11-6 libatk-bridge2.0-0 libatspi2.0-0 libgtk-3-0 libxcomposite1 libxcursor1 libxdamage1 libxrandr2 libgbm-dev fonts-liberation libasound2 libdrm2 libxkbcommon0 libxfixes3 libcups2 libnspr4 libu2f-udev libwayland-client0 && \
+# Install system dependencies and set timezone
+RUN apt-get update && \
+    apt-get install -y wget curl unzip gnupg xvfb tzdata libnss3 libx11-6 libatk-bridge2.0-0 libatspi2.0-0 libgtk-3-0 libxcomposite1 libxcursor1 libxdamage1 libxrandr2 libgbm-dev fonts-liberation libasound2 libdrm2 libxkbcommon0 libxfixes3 libcups2 libnspr4 libu2f-udev libwayland-client0 && \
+    ln -snf /usr/share/zoneinfo/Europe/Riga /etc/localtime && echo "Europe/Riga" > /etc/timezone && \
     rm -rf /var/lib/apt/lists/*
 
 # Add Google Chrome repository and install Chrome
