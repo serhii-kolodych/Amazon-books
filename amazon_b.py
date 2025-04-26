@@ -40,7 +40,7 @@ from aiogram.types import FSInputFile
 import pandas as pd
 
 
-current_time = datetime.now().strftime('%m%d%H:%Mm:%Ss')
+current_time = datetime.now().strftime('%m%d-%H:%Mm:%Ss')
 print(f" Amazon b STARTED! at {current_time}")
 
 ADMIN_IDS = config_a.ADMIN_IDS
@@ -674,7 +674,7 @@ async def start_b(chat_id, id_start='0'):
             author_name = None  # Initialize to avoid reference error
 
             for row in result:
-                current_time = datetime.now().strftime('%m%d%H:%Mm:%Ss')
+                current_time = datetime.now().strftime('%m%d-%H:%Mm:%Ss')
                 print(f"{current_time} _checking ID: {row[0]} {row[1]}")
                 #print(f" Loading author_url page = {row[0]}")
 
@@ -760,7 +760,7 @@ async def start_b(chat_id, id_start='0'):
                             # conn.commit()
                             # print(f"DELETED ID: {row[10]} // {author_name} // no links found")
                         elif len(author_links) > 0:
-                            current_time = datetime.now().strftime('%m%d%H:%Mm:%Ss')
+                            current_time = datetime.now().strftime('%m%d-%H:%Mm:%Ss')
                             print(f"{row[0]} ID - {len(author_links)} links Added at {current_time}")
                             # Send a message using your bot
                             await bot.send_message(chat_id, f"✅ ID: {row[0]} - {len(author_links)} links Added at {current_time} \n{author_url}")
@@ -829,7 +829,7 @@ async def start_b(chat_id, id_start='0'):
                                 cursor.close()
                                 conn.close()
             
-                            print("🚛 ", status, author_url)
+                            print("🚋 ", status, author_url)
                         else:
                             print(" 🚒 🚒 The element found is not an image or does not have a 'src' attribute.")
                     except Exception as e:

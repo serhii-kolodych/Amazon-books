@@ -53,7 +53,7 @@ Telegram bot in Python that:
   ```sh
   docker stop <container_name>
   ```
-- Remove a container:
+- Remove a container (Conflict. is already in use by container):
   ```sh
   docker rm <container_name>
   ```
