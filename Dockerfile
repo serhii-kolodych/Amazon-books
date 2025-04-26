@@ -13,6 +13,22 @@ WORKDIR /app
 # Clean up trusted.gpg.d (optional, for broken GPG issues)
 RUN rm -rf /etc/apt/trusted.gpg.d/*
 
+# Add missing Debian archive keys
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends gnupg; \
+    for key in \
+    0E98404D386FA1D9 \
+    6ED0E7B82643E131 \
+    605C66F00D6C9793 \
+    112695A0E562B32A \
+    54404762BBB6E853 \
+    ; do \
+    gpg --keyserver keyserver.ubuntu.com --recv-keys "$key" || \
+    gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys "$key" ; \
+    gpg --export "$key" | apt-key add - ; \
+    done
+
 # Install system dependencies and set timezone
 RUN apt-get update && \
     apt-get install -y wget curl unzip gnupg xvfb tzdata libnss3 libx11-6 libatk-bridge2.0-0 libatspi2.0-0 libgtk-3-0 libxcomposite1 libxcursor1 libxdamage1 libxrandr2 libgbm-dev fonts-liberation libasound2 libdrm2 libxkbcommon0 libxfixes3 libcups2 libnspr4 libu2f-udev libwayland-client0 && \
