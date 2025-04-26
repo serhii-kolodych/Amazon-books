@@ -25,7 +25,15 @@ Telegram bot in Python that:
    docker run -d --name amazon-b-bot amazon-b-bot
    ```
 
-3. **View logs:**
+3. **See only Running Containers / View logs:**
+
+   ```sh
+        docker ps
+   ```
+
+   ```sh
+        docker stats
+   ```
 
    ```sh
    docker logs -f amazon-b-bot
