@@ -1,0 +1,34 @@
+# Use a stable Python base image
+FROM --platform=linux/amd64 python:3.10-slim
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y wget curl unzip gnupg xvfb libnss3 libx11-6 libatk-bridge2.0-0 libatspi2.0-0 libgtk-3-0 libxcomposite1 libxcursor1 libxdamage1 libxrandr2 libgbm-dev fonts-liberation libasound2 libdrm2 libxkbcommon0 libxfixes3 libcups2 libnspr4 libu2f-udev libwayland-client0 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Add Google Chrome repository and install Chrome
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | \
+    gpg --dearmor -o /usr/share/keyrings/google-linux-signing-key.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-signing-key.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list && \
+    apt-get update && \
+    apt-get install -y google-chrome-stable && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
+COPY . .
+
+# Expose no ports (Telegram bot is outbound only)
+
+# Default command to run the Telegram bot
+CMD ["python", "amazon_b.py"] 

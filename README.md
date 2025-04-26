@@ -1,4 +1,5 @@
 # Amazon-books
+
 Telegram bot in Python that:
 
 1. The `Amazon_a.py` -> starts a browser and retrieves a proxy from the database.
@@ -9,3 +10,34 @@ Telegram bot in Python that:
 [Short Video on YouTube](https://youtube.com/shorts/__l4pE849Tc?si=H3bDM2uwxuvl25Jv)
 
 [Article on kolodych.com](https://kolodych.com/articles/first-telegram-bot.html#Amazon-bot)
+
+## Docker Quick Start
+
+1. **Build the Docker image:**
+
+   ```sh
+   docker build -t amazon-b-bot .
+   ```
+
+2. **Run the bot in the background:**
+
+   ```sh
+   docker run -d --name amazon-b-bot amazon-b-bot
+   ```
+
+3. **View logs:**
+
+   ```sh
+   docker logs -f amazon-b-bot
+   ```
+
+4. **Stop the bot:**
+
+   ```sh
+   docker stop amazon-b-bot
+   ```
+
+5. **Remove the container (optional):**
+   ```sh
+   docker rm amazon-b-bot
+   ```
