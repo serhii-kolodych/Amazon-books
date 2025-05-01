@@ -391,7 +391,6 @@ async def check_proxy(message: types.Message):
         url = f'https://whatismyipaddress.com/'
         await bot.send_message(message.from_user.id, f"🌈 starting driver to check proxy")
         
-        # driver = Driver(browser="safari", uc=True) #, headless=True) # (browser="chrome", proxy=proxy_string, headless=True)
         manager = WebDriverManager(conn_string)  # Create an instance of manager
         driver, proxy_info = manager.get_test_proxy_driver()
 
@@ -446,7 +445,6 @@ async def working_proxy(message: types.Message):
         url = f'https://whatismyipaddress.com/'
         await bot.send_message(message.from_user.id, f"🌈 starting driver to check proxy")
         
-        # driver = Driver(browser="safari", uc=True) #, headless=True) # (browser="chrome", proxy=proxy_string, headless=True)
         manager = WebDriverManager(conn_string)  # Create an instance of manager
         driver, proxy_info = manager.get_working_proxy_driver()
 
@@ -1264,14 +1262,21 @@ async def start_a(chat_id, subject_int, month):
  
                     sleep(1)
 
-                    x_span_results = '/html/body/div[1]/div[1]/span/div/h1/div/div[1]/div/h2/span'
-                    res_span = driver.find_element(By.XPATH, x_span_results)
-                    prev_final_res = final_res
-                    final_res = res_span.text.strip()
+                    try:
+                        x_span_results = '/html/body/div[1]/div[1]/span/div/h1/div/div[1]/div/h2/span'
+                        res_span = driver.find_element(By.XPATH, x_span_results)
+                        prev_final_res = final_res
+                        final_res = res_span.text.strip()
 
-                    print(f"@@ {page}page {final_res} -->{subject_int}sub<-- {month}month: {year} {format} sort: {sort_by}")
+                        print(f"@@ {page}page {final_res} -->{subject_int}sub<-- {month}month: {year} {format} sort: {sort_by}")
 
-                    await bot.send_message(chat_id, f"@@ {page}page {final_res} -->{subject_int}sub<-- {month}month: {year} {format} sort: {sort_by}")
+                        await bot.send_message(chat_id, f"@@ {page}page {final_res} -->{subject_int}sub<-- {month}month: {year} {format} sort: {sort_by}")
+                    except Exception:
+                        print(f"@@ {page}page [no results] -->{subject_int}sub<-- {month}month: {year} {format} sort: {sort_by}")
+
+                        await bot.send_message(chat_id, f"@@ {page}page [no results] -->{subject_int}sub<-- {month}month: {year} {format} sort: {sort_by}")
+
+
 
                     sleep(1)
                 # Loop through the items starting from index 2 up to item_count + 2

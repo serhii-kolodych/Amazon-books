@@ -6,3 +6,4 @@ sqlalchemy
 aiohttp
 pandas
 fake_useragent
+openpyxl
