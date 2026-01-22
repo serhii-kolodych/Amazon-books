@@ -1148,7 +1148,7 @@ async def repeat_a(chat_id):
 
 async def start_a(chat_id, subject_int, month):
     async with aiohttp.ClientSession() as session:
-        logger.info(f"-->START_A Session 1 Started")
+        print(f"-->START_A Session 1 Started")
         global conn_string   
         page = 1
 
@@ -1280,68 +1280,192 @@ async def start_a(chat_id, subject_int, month):
 
                     sleep(1)
                 # Loop through the items starting from index 2 up to item_count + 2
-                for i in range(2, 15):
+                for i in range(2, 19):
 
-                    xtitle = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/span/div/div/div/div[2]/div/div/div[1]/a/h2/span' # new since 18.02.2025
+                    xtitle = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/a'
+
+                    xauthor2 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a'
+                    xauthor = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a[2]'
+                    xauthor1 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a[1]'
+
+
+
+                    xtitle2025 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/span/div/div/div/div[2]/div/div/div[1]/a/h2/span' # new since 18.02.2025
                     xtitle2 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/h2/a' # 2024.08.27 changed to new
-                    xauthor2 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a' # old since ...
-                    xauthor = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a' # new since 18.02.2025
+                    # xauthor2 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a' # old since ...
+                    xauthor2025 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a' # new since 18.02.2025
 
                     try:
+                        # print("0206 searching title ")
                         title_span = driver.find_element(By.XPATH, xtitle)
                     except NoSuchElementException:
-                        logger.error(f'>--<--Refreshing page. {page}.html Saved')
+                        print(f'>--<--Refreshing page. {page}.html Saved')
                         driver.refresh()
                         sleep(5) # SLEEP when couldn't find title
                         title_span = driver.find_element(By.XPATH, xtitle2)
                     # Extract title text (it's inside a -> span)
                     title = title_span.text.strip()
-                    # print(f'{i} title= ', title)
+                    print(f'{i-1} title= ', title)
 
+
+                    from selenium.common.exceptions import NoSuchElementException
+
+                    title_element = None
+
+                    # print(f"[STEP 1] Trying xauthor:")
                     try:
-                        # Try finding the element with the first XPath (xauthor)
                         title_element = driver.find_element(By.XPATH, xauthor)
+                        # print("[FOUND] xauthor")
                     except NoSuchElementException:
+                        pass
+                        # print("[MISS] xauthor")
+
+                    if title_element is None:
+                        # print(f"[STEP 2] Trying xauthor1:")
+                        try:
+                            title_element = driver.find_element(By.XPATH, xauthor1)
+                            # print("[FOUND] xauthor1")
+                        except NoSuchElementException:
+                            # print("[MISS] xauthor1 — skipping item")
+                            pass
+
+                    if title_element is None:
+                        # print(f"[STEP 2] Trying xauthor2: {xauthor2}")
                         try:
                             title_element = driver.find_element(By.XPATH, xauthor2)
+                            # print("[FOUND] xauthor2")
                         except NoSuchElementException:
+                            # print("[MISS] xauthor2 — skipping item")
                             continue
-                        #     # You might want to add additional error handling or raise the exception here
 
-                    # If the element was found successfully, proceed with extracting and modifying the link
+                    # print("[STEP 3] title_element =", title_element)
+
+                    # print("[STEP 4] Extracting href")
                     link = title_element.get_attribute("href")
+                    # print("href =", link)
+
+                    if not link:
+                        # print("[ERROR] href is empty — skipping")
+                        continue
+
+                    # Если это ссылка на сам продукт
                     if link.startswith("https://www.amazon.com/dp/"):
+                        # print("[INFO] Author link is actually product link, using xtitle")
                         title_link = driver.find_element(By.XPATH, xtitle)
                         link = title_link.get_attribute("href")
+                        # print("Product href =", link)
 
-                    else:
-                        parts = link.split('/')
-                        author_id = parts[-3]
-                        asin = parts[-1].split('?')[0]
+                    # print("[STEP 5] Parsing author link")
 
-                        #search_query = search_query
-                        final_link = f"https://www.amazon.com/stores/{author_id}/author/{asin}/about"
-                        # print(f"--> final_link = ", final_link)
-                        
+                    # Примеры корректных author URL:
+                    # https://www.amazon.com/stores/Author-Name/author/B08XXXXXXX
+                    # https://www.amazon.com/Author-Name/e/B08XXXXXXX
+
+                    # author_id = None
+                    asin = None
+
+                    parts = link.split("/")
+
+                    if "author" in parts:
                         try:
-                            conn = psycopg2.connect(conn_string)
-                            cursor = conn.cursor()
-                            query_db = """
-                                INSERT INTO amazon_books (query, page, about_link, status)
-                                VALUES (%s, %s, %s, %s)
-                                ON CONFLICT (about_link)
-                                DO UPDATE SET query = EXCLUDED.query, page = EXCLUDED.page;
-                            """
-                            cursor.execute(query_db, (search_query, page, final_link, 'new'))
-                            conn.commit()
+                            author_index = parts.index("author")
+                            # author_id = parts[author_index - 1]
+                            asin = parts[author_index + 1].split("?")[0]
                         except Exception as e:
-                            logger.error(f"Error inserting/updating data into amazon_books: {e}")
-                        finally:
-                            if cursor:
-                                cursor.close()
-                            if conn:
-                                conn.close()
-                            # print("___----___ -- _ DB updated === ", query_db)
+                            # print("[ERROR] Failed parsing /author/ URL:", e)
+                            continue
+                    elif "/e/" in link:
+                        try:
+                            asin = parts[-1].split("?")[0]
+                            # author_id = parts[-2]
+                        except Exception as e:
+                            # print("[ERROR] Failed parsing /e/ URL:", e)
+                            continue
+                    else:
+                        # print("[ERROR] Unknown author URL format — skipping")
+                        continue
+
+                    # print("author_id =", author_id)
+                    # print("asin =", asin)
+
+                    final_link = f"https://www.amazon.com/stores/author/{asin}/about"
+                    print(f"✅ {i-1} final_link =", final_link)
+
+                    # print("[STEP 7] Inserting into DB")
+                    try:
+                        conn = psycopg2.connect(conn_string)
+                        cursor = conn.cursor()
+
+                        query_db = """
+                            INSERT INTO amazon_books (query, page, about_link, status)
+                            VALUES (%s, %s, %s, %s)
+                            ON CONFLICT (about_link)
+                            DO UPDATE SET query = EXCLUDED.query, page = EXCLUDED.page;
+                        """
+
+                        cursor.execute(query_db, (search_query, page, final_link, 'new'))
+                        conn.commit()
+
+                        # print("[SUCCESS] DB insert/update completed")
+                    except Exception as e:
+                        print("🚨 [DB ERROR]", e)
+                    finally:
+                        if cursor:
+                            cursor.close()
+                        if conn:
+                            conn.close()
+
+
+                    # try:
+                    #     # Try finding the element with the first XPath (xauthor)
+                    #     print("0206 searching author ")
+                    #     title_element = driver.find_element(By.XPATH, xauthor)
+                    # except NoSuchElementException:
+                    #     try:
+                    #         print("0206 searching author2 ")
+                    #         title_element = driver.find_element(By.XPATH, xauthor2)
+                    #     except NoSuchElementException:
+                    #         continue
+                    #     #     # You might want to add additional error handling or raise the exception here
+
+                    # # If the element was found successfully, proceed with extracting and modifying the link
+                    # print("0206 - xauthor = title_element=", title_element)
+                    # try:
+                    #     link = title_element.get_attribute("href")
+                    #     if link.startswith("https://www.amazon.com/dp/"):
+                    #         title_link = driver.find_element(By.XPATH, xtitle)
+                    #         link = title_link.get_attribute("href")
+
+                    #     else:
+                    #         parts = link.split('/')
+                    #         author_id = parts[-3]
+                    #         asin = parts[-1].split('?')[0]
+
+                    #         #search_query = search_query
+                    #         final_link = f"https://www.amazon.com/stores/{author_id}/author/{asin}/about"
+                    #         # print(f"--> final_link = ", final_link)
+                            
+                    #         try:
+                    #             conn = psycopg2.connect(conn_string)
+                    #             cursor = conn.cursor()
+                    #             query_db = """
+                    #                 INSERT INTO amazon_books (query, page, about_link, status)
+                    #                 VALUES (%s, %s, %s, %s)
+                    #                 ON CONFLICT (about_link)
+                    #                 DO UPDATE SET query = EXCLUDED.query, page = EXCLUDED.page;
+                    #             """
+                    #             cursor.execute(query_db, (search_query, page, final_link, 'new'))
+                    #             conn.commit()
+                    #         except Exception as e:
+                    #             logger.error(f"Error inserting/updating data into amazon_books: {e}")
+                    #         finally:
+                    #             if cursor:
+                    #                 cursor.close()
+                    #             if conn:
+                    #                 conn.close()
+                    #             # print("___----___ -- _ DB updated === ", query_db)
+                    # except Exception as e:
+                    #     print(f"Error extracting link from author: {e}")
 
 
                     # Pause for 0.5 seconds (adjust as needed)
