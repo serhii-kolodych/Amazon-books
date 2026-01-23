@@ -1155,11 +1155,11 @@ async def start_a(chat_id, subject_int, month):
         try:
             url = f'https://www.amazon.com/advanced-search/books'
 
-            await bot.send_message(chat_id, f"🌈 starting driver for {subject_int}sub {month}mon")
+            # await bot.send_message(chat_id, f"🌈 starting driver for {subject_int}sub {month}mon")
             
             manager = WebDriverManager(conn_string)  
             driver, proxy_info = manager.get_working_proxy_driver()
-            await bot.send_message(chat_id,  f"proxy_info: {proxy_info} ")
+            # await bot.send_message(chat_id,  f"proxy_info: {proxy_info} ")
             
             driver.get(url)
 
@@ -1245,42 +1245,29 @@ async def start_a(chat_id, subject_int, month):
                     cursor.close()
                 if conn:
                     conn.close()
-            prev_final_res = ''
-            final_res = 'not'
 
-            while page < 100 and prev_final_res != final_res: # was 76
-                if page > 0:
-                    manager.update_proxy_info(proxy_info[0]) 
-                    time.sleep(2) 
-                    if page == 1:
-                        next_page_button = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[4]/span/a"
+            prev_final_res = ""
+            final_res = "init"
+            page = 1
 
-                    if page > 1:
-                        next_page_button = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[5]/span/a"
-                    if page == 4:
-                        next_page_button = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[7]/span/a"
- 
-                    sleep(1)
+            while page < 100 and prev_final_res != final_res:
 
-                    try:
-                        x_span_results = '/html/body/div[1]/div[1]/span/div/h1/div/div[1]/div/h2/span'
-                        res_span = driver.find_element(By.XPATH, x_span_results)
-                        prev_final_res = final_res
-                        final_res = res_span.text.strip()
+                try:
+                    x_span_results = "/html/body/div[1]/div[1]/span/div/h1/div/div[1]/div/h2/span"
+                    res_span = driver.find_element(By.XPATH, x_span_results)
+                    prev_final_res = final_res
+                    final_res = res_span.text.strip()
+                except NoSuchElementException:
+                    prev_final_res = final_res
+                    final_res = ""
 
-                        print(f"@@ {page}page {final_res} -->{subject_int}sub<-- {month}month: {year} {format} sort: {sort_by}")
+                await bot.send_message(
+                    chat_id,
+                    f"@@ page {page} result: {final_res}"
+                )
 
-                        await bot.send_message(chat_id, f"@@ {page}page {final_res} -->{subject_int}sub<-- {month}month: {year} {format} sort: {sort_by}")
-                    except Exception:
-                        print(f"@@ {page}page [no results] -->{subject_int}sub<-- {month}month: {year} {format} sort: {sort_by}")
-
-                        await bot.send_message(chat_id, f"@@ {page}page [no results] -->{subject_int}sub<-- {month}month: {year} {format} sort: {sort_by}")
-
-
-
-                    sleep(1)
-                # Loop through the items starting from index 2 up to item_count + 2
                 for i in range(2, 19):
+                    # await bot.send_message(chat_id, f"item i = {i}")
 
                     xtitle = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/a'
 
@@ -1299,16 +1286,14 @@ async def start_a(chat_id, subject_int, month):
                         # print("0206 searching title ")
                         title_span = driver.find_element(By.XPATH, xtitle)
                     except NoSuchElementException:
-                        print(f'>--<--Refreshing page. {page}.html Saved')
-                        driver.refresh()
-                        sleep(5) # SLEEP when couldn't find title
-                        title_span = driver.find_element(By.XPATH, xtitle2)
+                        pass
+                        # print(f'>--<--Refreshing page. {page}.html Saved')
+                        # driver.refresh()
+                        # sleep(5) # SLEEP when couldn't find title
+                        # title_span = driver.find_element(By.XPATH, xtitle2)
                     # Extract title text (it's inside a -> span)
                     title = title_span.text.strip()
                     print(f'{i-1} title= ', title)
-
-
-                    from selenium.common.exceptions import NoSuchElementException
 
                     title_element = None
 
@@ -1341,6 +1326,18 @@ async def start_a(chat_id, subject_int, month):
                     # print("[STEP 3] title_element =", title_element)
 
                     # print("[STEP 4] Extracting href")
+                    # # Save HTML content to an HTML file when i = 3
+                    if i == 3:
+
+                        try:
+                            with open(f'{page}.html', 'w', encoding='utf-8') as html_file:
+                                html_file.write(driver.page_source)
+                            html_document = FSInputFile(path=f'{page}.html')
+                            await bot.send_document (chat_id, document=html_document, caption=f'📊 {page}.html Amazon Books when i = 3')
+                            os.remove(f'{page}.html')
+                            sleep(3) 
+                        except Exception as e:
+                            await bot.send_document (chat_id, f"error while sending {page}.html: {e}")
                     link = title_element.get_attribute("href")
                     # print("href =", link)
 
@@ -1415,94 +1412,295 @@ async def start_a(chat_id, subject_int, month):
                         if conn:
                             conn.close()
 
-
-                    # try:
-                    #     # Try finding the element with the first XPath (xauthor)
-                    #     print("0206 searching author ")
-                    #     title_element = driver.find_element(By.XPATH, xauthor)
-                    # except NoSuchElementException:
-                    #     try:
-                    #         print("0206 searching author2 ")
-                    #         title_element = driver.find_element(By.XPATH, xauthor2)
-                    #     except NoSuchElementException:
-                    #         continue
-                    #     #     # You might want to add additional error handling or raise the exception here
-
-                    # # If the element was found successfully, proceed with extracting and modifying the link
-                    # print("0206 - xauthor = title_element=", title_element)
-                    # try:
-                    #     link = title_element.get_attribute("href")
-                    #     if link.startswith("https://www.amazon.com/dp/"):
-                    #         title_link = driver.find_element(By.XPATH, xtitle)
-                    #         link = title_link.get_attribute("href")
-
-                    #     else:
-                    #         parts = link.split('/')
-                    #         author_id = parts[-3]
-                    #         asin = parts[-1].split('?')[0]
-
-                    #         #search_query = search_query
-                    #         final_link = f"https://www.amazon.com/stores/{author_id}/author/{asin}/about"
-                    #         # print(f"--> final_link = ", final_link)
-                            
-                    #         try:
-                    #             conn = psycopg2.connect(conn_string)
-                    #             cursor = conn.cursor()
-                    #             query_db = """
-                    #                 INSERT INTO amazon_books (query, page, about_link, status)
-                    #                 VALUES (%s, %s, %s, %s)
-                    #                 ON CONFLICT (about_link)
-                    #                 DO UPDATE SET query = EXCLUDED.query, page = EXCLUDED.page;
-                    #             """
-                    #             cursor.execute(query_db, (search_query, page, final_link, 'new'))
-                    #             conn.commit()
-                    #         except Exception as e:
-                    #             logger.error(f"Error inserting/updating data into amazon_books: {e}")
-                    #         finally:
-                    #             if cursor:
-                    #                 cursor.close()
-                    #             if conn:
-                    #                 conn.close()
-                    #             # print("___----___ -- _ DB updated === ", query_db)
-                    # except Exception as e:
-                    #     print(f"Error extracting link from author: {e}")
-
-
                     # Pause for 0.5 seconds (adjust as needed)
+
                     sleep(0.5)
-                retry_attempts = 3
 
-                while retry_attempts > 0 and page < 75:
+                # after all items processed
+                # await bot.send_message(chat_id, "🚛 SCROLLING TO BOTTOM")
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                driver.execute_script("window.scrollBy(0, -300);")
+                sleep(2)
+
+
+                await bot.send_message(chat_id, "🚛 trying NEXT BUTTON")
+
+                if page == 1:
+                    xpaths = [
+                        "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[5]/span/a",
+                        "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[20]/div/div/span/ul/li[5]/span/a",
+                    ]
+                elif page == 4:
+                    xpaths = [
+                        "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[7]/span/a",
+                    ]
+                else:
+                    xpaths = [
+                        "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[5]/span/a",
+                    ]
+
+                clicked = False
+                last_xpath = ""
+
+                for xp in xpaths:
+                    last_xpath = xp
                     try:
-
-                        # print("🚛 trying NEXT BUTTON")
-                        # await bot.send_message(chat_id, "🚛 trying NEXT BUTTON")
-
-                        driver.find_element(By.XPATH, next_page_button).click()
+                        btn = WebDriverWait(driver, 5).until(
+                            EC.element_to_be_clickable((By.XPATH, xp))
+                        )
+                        btn.click()
+                        clicked = True
                         break
+                    except:
+                        pass
 
-                    except TimeoutException or NoSuchElementException:
-                        logger.error("Timed out waiting for next page button. Retrying...")
-                        retry_attempts -= 1
-                        time.sleep(6)  # when Error Timeout
-                        if retry_attempts == 1:
-                            driver.refresh()
-                            logger.error(f"-->Refreshing page {page}")
-                            # Reinitialize the WebDriverWait
-                            wait = WebDriverWait(driver, 10)
-                            continue
+                if not clicked:
+                    await bot.send_message(chat_id, "❌ NEXT BUTTON not clickable")
+                    await bot.send_message(chat_id, last_xpath)
+                    break
 
-                    except StaleElementReferenceException:
-                        logger.error("Stale element reference. Reloading the page and retrying...")
-                        # Reload the entire page
-                        driver.refresh()
-                        # Reinitialize the WebDriverWait
-                        wait = WebDriverWait(driver, 10)
-                        continue
                 page += 1
+                sleep(2)
+                await bot.send_message(chat_id, "sleeping 2 sec after NEXT button pressed")
+
             else:
-                logger.info(f"-->Max page Parsed = {page} pages. Stopping...")
-                await bot.send_message(chat_id, f"🎉🎉🎉 Max page Parsed = {page} pages. Stopping...")
+                await bot.send_message(chat_id, last_xpath)
+                await bot.send_message(chat_id, f"🎉 Parsed {page} pages. Done.")
+
+
+
+
+            
+            # prev_final_res = ''
+            # final_res = 'not'
+
+            # while page < 100 and prev_final_res != final_res: # was 76
+            #     # Loop through the items starting from index 2 up to item_count + 2
+            #     for i in range(2, 19):
+            #         await bot.send_message(chat_id, f"item i = {i}")
+
+            #         xtitle = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/a'
+
+            #         xauthor2 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a'
+            #         xauthor = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a[2]'
+            #         xauthor1 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a[1]'
+
+
+
+            #         xtitle2025 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/span/div/div/div/div[2]/div/div/div[1]/a/h2/span' # new since 18.02.2025
+            #         xtitle2 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/h2/a' # 2024.08.27 changed to new
+            #         # xauthor2 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a' # old since ...
+            #         xauthor2025 = f'/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/span/div/div/div/div[2]/div/div/div[1]/div/div/a' # new since 18.02.2025
+
+            #         try:
+            #             # print("0206 searching title ")
+            #             title_span = driver.find_element(By.XPATH, xtitle)
+            #         except NoSuchElementException:
+            #             print(f'>--<--Refreshing page. {page}.html Saved')
+            #             driver.refresh()
+            #             sleep(5) # SLEEP when couldn't find title
+            #             title_span = driver.find_element(By.XPATH, xtitle2)
+            #         # Extract title text (it's inside a -> span)
+            #         title = title_span.text.strip()
+            #         print(f'{i-1} title= ', title)
+
+
+            #         from selenium.common.exceptions import NoSuchElementException
+
+            #         title_element = None
+
+            #         # print(f"[STEP 1] Trying xauthor:")
+            #         try:
+            #             title_element = driver.find_element(By.XPATH, xauthor)
+            #             # print("[FOUND] xauthor")
+            #         except NoSuchElementException:
+            #             pass
+            #             # print("[MISS] xauthor")
+
+            #         if title_element is None:
+            #             # print(f"[STEP 2] Trying xauthor1:")
+            #             try:
+            #                 title_element = driver.find_element(By.XPATH, xauthor1)
+            #                 # print("[FOUND] xauthor1")
+            #             except NoSuchElementException:
+            #                 # print("[MISS] xauthor1 — skipping item")
+            #                 pass
+
+            #         if title_element is None:
+            #             # print(f"[STEP 2] Trying xauthor2: {xauthor2}")
+            #             try:
+            #                 title_element = driver.find_element(By.XPATH, xauthor2)
+            #                 # print("[FOUND] xauthor2")
+            #             except NoSuchElementException:
+            #                 # print("[MISS] xauthor2 — skipping item")
+            #                 continue
+
+            #         # print("[STEP 3] title_element =", title_element)
+
+            #         # print("[STEP 4] Extracting href")
+            #         # # Save HTML content to an HTML file when i = 3
+            #         if i == 3:
+
+            #             try:
+            #                 with open(f'{page}.html', 'w', encoding='utf-8') as html_file:
+            #                     html_file.write(driver.page_source)
+            #                 html_document = FSInputFile(path=f'{page}.html')
+            #                 await bot.send_document (chat_id, document=html_document, caption=f'📊 {page}.html Amazon Books when i = 3')
+            #                 os.remove(f'{page}.html')
+            #             except Exception as e:
+            #                 await bot.send_document (chat_id, f"error while sending {page}.html: {e}")
+            #         link = title_element.get_attribute("href")
+            #         # print("href =", link)
+
+            #         if not link:
+            #             # print("[ERROR] href is empty — skipping")
+            #             continue
+
+            #         # Если это ссылка на сам продукт
+            #         if link.startswith("https://www.amazon.com/dp/"):
+            #             # print("[INFO] Author link is actually product link, using xtitle")
+            #             title_link = driver.find_element(By.XPATH, xtitle)
+            #             link = title_link.get_attribute("href")
+            #             # print("Product href =", link)
+
+            #         # print("[STEP 5] Parsing author link")
+
+            #         # Примеры корректных author URL:
+            #         # https://www.amazon.com/stores/Author-Name/author/B08XXXXXXX
+            #         # https://www.amazon.com/Author-Name/e/B08XXXXXXX
+
+            #         # author_id = None
+            #         asin = None
+
+            #         parts = link.split("/")
+
+            #         if "author" in parts:
+            #             try:
+            #                 author_index = parts.index("author")
+            #                 # author_id = parts[author_index - 1]
+            #                 asin = parts[author_index + 1].split("?")[0]
+            #             except Exception as e:
+            #                 # print("[ERROR] Failed parsing /author/ URL:", e)
+            #                 continue
+            #         elif "/e/" in link:
+            #             try:
+            #                 asin = parts[-1].split("?")[0]
+            #                 # author_id = parts[-2]
+            #             except Exception as e:
+            #                 # print("[ERROR] Failed parsing /e/ URL:", e)
+            #                 continue
+            #         else:
+            #             # print("[ERROR] Unknown author URL format — skipping")
+            #             continue
+
+            #         # print("author_id =", author_id)
+            #         # print("asin =", asin)
+
+            #         final_link = f"https://www.amazon.com/stores/author/{asin}/about"
+            #         print(f"✅ {i-1} final_link =", final_link)
+
+            #         # print("[STEP 7] Inserting into DB")
+            #         try:
+            #             conn = psycopg2.connect(conn_string)
+            #             cursor = conn.cursor()
+
+            #             query_db = """
+            #                 INSERT INTO amazon_books (query, page, about_link, status)
+            #                 VALUES (%s, %s, %s, %s)
+            #                 ON CONFLICT (about_link)
+            #                 DO UPDATE SET query = EXCLUDED.query, page = EXCLUDED.page;
+            #             """
+
+            #             cursor.execute(query_db, (search_query, page, final_link, 'new'))
+            #             conn.commit()
+
+            #             # print("[SUCCESS] DB insert/update completed")
+            #         except Exception as e:
+            #             print("🚨 [DB ERROR]", e)
+            #         finally:
+            #             if cursor:
+            #                 cursor.close()
+            #             if conn:
+            #                 conn.close()
+
+            #         # Pause for 0.5 seconds (adjust as needed)
+            #         sleep(0.5)
+
+            #         if i > 15 and page > 0:
+            #         # manager.update_proxy_info(proxy_info[0]) 
+            #             await bot.send_message(chat_id, "🚛 Trying NEXT BUTTON")
+            #             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            #             time.sleep(2) 
+
+            #             if page == 1:
+            #                 # next_page_button = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[4]/span/a" #2025
+            #                 try:
+            #                     next_page_button = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[5]/span/a" #2026.01.23
+            #                     await bot.send_message(chat_id, "🚛 NEXT BUTTON 1 pressed")
+
+            #                 except:
+            #                     next_page_button2 = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[20]/div/div/span/ul/li[5]/span/a"
+            #                     await bot.send_message(chat_id, "🚛 NEXT BUTTON 2 pressed")
+
+            #             if page > 1:
+            #                 next_page_button = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[5]/span/a"
+            #             if page == 4:
+            #                 next_page_button = "/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[18]/div/div/span/ul/li[7]/span/a"
+    
+            #             sleep(1)
+
+            #             try:
+            #                 x_span_results = '/html/body/div[1]/div[1]/span/div/h1/div/div[1]/div/h2/span'
+            #                 res_span = driver.find_element(By.XPATH, x_span_results)
+            #                 prev_final_res = final_res
+            #                 final_res = res_span.text.strip()
+
+            #                 print(f"@@ {page}page {final_res} -->{subject_int}sub<-- {month}month: {year} {format} sort: {sort_by}")
+
+            #                 await bot.send_message(chat_id, f"@@ {page}page {final_res} -->{subject_int}sub<-- {month}month: {year} {format} sort: {sort_by}")
+            #             except Exception:
+            #                 print(f"@@ {page}page [no results] -->{subject_int}sub<-- {month}month: {year} {format} sort: {sort_by}")
+
+            #                 await bot.send_message(chat_id, f"@@ {page}page [no results] -->{subject_int}sub<-- {month}month: {year} {format} sort: {sort_by}")
+
+            #             page += 1
+
+
+
+            #         sleep(1)
+            #     # retry_attempts = 3
+
+            #     # while retry_attempts > 0 and page < 75:
+            #     #     try:
+
+            #     #         # print("🚛 trying NEXT BUTTON")
+            #     #         # await bot.send_message(chat_id, "🚛 trying NEXT BUTTON")
+
+            #     #         driver.find_element(By.XPATH, next_page_button).click()
+            #     #         break
+
+            #     #     except TimeoutException or NoSuchElementException:
+            #     #         logger.error("Timed out waiting for next page button. Retrying...")
+            #     #         retry_attempts -= 1
+            #     #         time.sleep(6)  # when Error Timeout
+            #     #         if retry_attempts == 1:
+            #     #             driver.refresh()
+            #     #             logger.error(f"-->Refreshing page {page}")
+            #     #             # Reinitialize the WebDriverWait
+            #     #             wait = WebDriverWait(driver, 10)
+            #     #             continue
+
+            #     #     except StaleElementReferenceException:
+            #     #         logger.error("Stale element reference. Reloading the page and retrying...")
+            #     #         # Reload the entire page
+            #     #         driver.refresh()
+            #     #         # Reinitialize the WebDriverWait
+            #     #         wait = WebDriverWait(driver, 10)
+            #     #         continue
+            #     # page += 1
+            # else:
+            #     logger.info(f"-->Max page Parsed = {page} pages. Stopping...")
+            #     await bot.send_message(chat_id, f"🎉🎉🎉 Max page Parsed = {page} pages. Stopping...")
 
         except Exception as e:
             logger.error(f"-->Main Exception: \n{e} ")
