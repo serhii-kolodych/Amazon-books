@@ -110,41 +110,20 @@ async def handle_now(message: types.Message):
 
 @dp.message(Command("total"))
 async def handle_total(message: types.Message):
-    print(f"--/TOTAL command pressed")
-    try:
-        conn = psycopg2.connect(**conn_params)
-        cursor = conn.cursor()
-        # Total of status XLS
-        query_total = "SELECT COUNT(*) FROM amazon_books WHERE status = 'xls'"
-        cursor.execute(query_total)
-        total_count = cursor.fetchone()[0]
-
-        query_total = "SELECT COUNT(*) FROM amazon_books"
-        cursor.execute(query_total)
-        total_amazon_books = cursor.fetchone()[0]
-
-        query_new = "SELECT COUNT(*) FROM amazon_books WHERE status = 'new'"
-        cursor.execute(query_new)
-        total_to_scan = cursor.fetchone()[0]
-
-        query_text = "SELECT COUNT(*) FROM amazon_books WHERE status = 'text'"
-        cursor.execute(query_text)
-        total_text = cursor.fetchone()[0]
-
-        query_links = "SELECT COUNT(*) FROM amazon_books WHERE status = 'links'"
-        cursor.execute(query_links)
-        total_links = cursor.fetchone()[0]
-
-        select_query = "SELECT value FROM vars WHERE name = 'offset'"
-        cursor.execute(select_query)
-        existing_offset = cursor.fetchone()[0].strip()
-        offset = int(existing_offset)
-
-        await message.answer(f"🔗 Total: {total_count - offset} author - links 🔗\nTo Scan New /start: {total_to_scan} ⚠️"
-                            f"\nLinks found: {total_links} \nSome text (no-links): {total_text} \nAll: {total_amazon_books} ")
-    finally:
-        cursor.close()
-        conn.close()
+    counts = {
+        status: db_fetchone(f"SELECT COUNT(*) FROM amazon_books WHERE status = %s", (status,))[0]
+        for status in ('xls', 'new', 'text', 'links')
+    }
+    total = db_fetchone("SELECT COUNT(*) FROM amazon_books")[0]
+    offset_row = db_fetchone("SELECT value FROM vars WHERE name = 'offset'")
+    offset = int(offset_row[0].strip()) if offset_row else 0
+    await message.answer(
+        f"🔗 Total: {counts['xls'] - offset} author-links 🔗\n"
+        f"To Scan New /start: {counts['new']} ⚠️\n"
+        f"Links found: {counts['links']}\n"
+        f"Some text (no-links): {counts['text']}\n"
+        f"All: {total}"
+    )
 
 
 @dp.message(Command("status"))
