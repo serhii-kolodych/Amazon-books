@@ -67,7 +67,7 @@ def db_execute(query: str, params=None):
 
 def create_driver() -> Driver:
     ua = UserAgent().random
-    return Driver(browser="safari", headless=True, uc=True, agent=ua)
+    return Driver(browser="safari", headless=True) #, uc=True, agent=ua)
 
 
 # --- Bot commands ---
