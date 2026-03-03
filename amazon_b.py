@@ -1,4 +1,5 @@
 # pip install beautifulsoup4 selenium-base selenium fake-useragent pandas aiohttp aiogram sqlalchemy asyncio pymysql openpyxl psycopg2
+
 import asyncio
 import os
 import re
@@ -30,6 +31,7 @@ ADMIN_IDS = config_a.ADMIN_IDS
 bot = Bot(TOKEN)
 dp = Dispatcher()
 user_tasks: dict = {}
+BROWSER = "chrome"  # default, switch with /browser command
 
 LINK_PREFIXES = ['@', 'http', 'www', '.com', '.co', '.org', '.net', '.ca',
                  '.info', '.xyz', '.ly', '.site', '.me', '.ru', '.de',
@@ -67,7 +69,8 @@ def db_execute(query: str, params=None):
 
 def create_driver() -> Driver:
     ua = UserAgent().random
-    return Driver(browser="safari", headless=True) #, uc=True, agent=ua)
+    headless = BROWSER != "safari"  # Safari doesn't support headless
+    return Driver(browser=BROWSER, headless=headless, uc=True, agent=ua)
 
 
 # --- Bot commands ---
@@ -118,11 +121,11 @@ async def handle_total(message: types.Message):
     offset_row = db_fetchone("SELECT value FROM vars WHERE name = 'offset'")
     offset = int(offset_row[0].strip()) if offset_row else 0
     await message.answer(
-        f"🔗 Total: {counts['xls'] - offset} author-links 🔗\n"
-        f"To Scan New /start: {counts['new']} ⚠️\n"
-        f"Links found: {counts['links']}\n"
-        f"Some text (no-links): {counts['text']}\n"
-        f"All: {total}"
+        f"Total: {total}\n"
+        f"XLS (links): {counts['xls'] - offset}\n"
+        f"New (to scan): {counts['new']}\n"
+        f"Text: {counts['text']}\n"
+        f"Links: {counts['links']}"
     )
 
 
@@ -164,8 +167,23 @@ async def handle_help(message: types.Message):
         "/total - counts\n"
         "/status - status breakdown\n"
         "/xls - download results\n"
+        "/browser chrome|safari - switch browser\n"
         "/py - get source file"
     )
+
+
+@dp.message(Command("browser"))
+async def handle_browser(message: types.Message):
+    global BROWSER
+    if message.from_user.id not in ADMIN_IDS:
+        await message.answer("Not authorised.")
+        return
+    parts = message.text.strip().split()
+    if len(parts) < 2 or parts[1].lower() not in ("chrome", "safari"):
+        await message.answer(f"Current browser: {BROWSER}\nUsage: /browser chrome or /browser safari")
+        return
+    BROWSER = parts[1].lower()
+    await message.answer(f"Browser set to {BROWSER}. Restart scan with /start to apply.")
 
 
 @dp.message()
@@ -231,9 +249,8 @@ async def run_loop(chat_id: int, start_id: int = None):
 
         while True:
             rows = db_fetch(
-                "SELECT id, about_link, link1, link2, link3, link4, link5, "
-                "link6, link7, link8, link9 "
-                "FROM amazon_books WHERE status = 'new' AND id >= %s ORDER BY id ASC LIMIT 50",
+                "SELECT id, about_link FROM amazon_books "
+                "WHERE status = 'new' AND id >= %s ORDER BY id ASC LIMIT 50",
                 (start_id,)
             )
             if not rows:
@@ -245,25 +262,20 @@ async def run_loop(chat_id: int, start_id: int = None):
                 row_id, author_url = row[0], row[1]
                 try:
                     await scrape_author(driver, chat_id, row_id, author_url)
+                    start_id = row_id + 1
+                    await asyncio.sleep(0.5)
                 except Exception as e:
-                    log.error(f"Error on ID {row_id}: {e}")
-                    # Recreate driver on timeout/connection errors
-                    if "timed out" in str(e).lower() or "connection" in str(e).lower():
-                        log.info("Recreating driver after timeout...")
-                        try:
-                            driver.quit()
-                        except Exception:
-                            pass
-                        await asyncio.sleep(5)
-                        driver = create_driver()
-                    # Mark as error so we don't loop forever on bad URLs
-                    db_execute(
-                        "UPDATE amazon_books SET status = 'error' WHERE id = %s",
-                        (row_id,)
-                    )
-
-                start_id = row_id + 1
-                await asyncio.sleep(0.5)
+                    log.error(f"Driver error on ID {row_id}: {e}")
+                    try:
+                        driver.quit()
+                    except Exception:
+                        pass
+                    driver = None
+                    await bot.send_message(chat_id, f"Driver error on ID {row_id}. Restarting in 5s...")
+                    await asyncio.sleep(5)
+                    driver = create_driver()
+                    log.info(f"Driver restarted. Resuming from ID {row_id}.")
+                    break  # re-fetch batch from same start_id
 
     except asyncio.CancelledError:
         log.info(f"Task cancelled for {chat_id}")
