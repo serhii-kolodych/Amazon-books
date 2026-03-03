@@ -26,61 +26,61 @@ from sqlalchemy import text
 from dictionaries import all_subjects, months, all_sort, sort_bys, all_formats, dicti
 from x_paths import x_published_date, x_month, x_sort, x_year, x_subject, x_condition, x_format, x_language, x_search_button
 
-print("[INIT] Loading config and constants...")
+print("amaz_round.py [INIT] Loading config and constants...")
 TOKEN = config_a.TOKEN
 ADMIN_IDS = config_a.ADMIN_IDS
 conn_string = config_a.conn_string
-print(f"[INIT] TOKEN loaded: {'yes' if TOKEN else 'NO - MISSING'}")
-print(f"[INIT] ADMIN_IDS: {ADMIN_IDS}")
-print(f"[INIT] conn_string loaded: {'yes' if conn_string else 'NO - MISSING'}")
+#print(f"[INIT] TOKEN loaded: {'yes' if TOKEN else 'NO - MISSING'}")
+#print(f"[INIT] ADMIN_IDS: {ADMIN_IDS}")
+#print(f"[INIT] conn_string loaded: {'yes' if conn_string else 'NO - MISSING'}")
 
 script_dir = os.path.dirname(__file__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
                     filename=os.path.join(script_dir, 'amazon_a.log'))
 logger = logging.getLogger('amazon_a')
-print(f"[INIT] Logger configured. Log file: {os.path.join(script_dir, 'amazon_a.log')}")
+#print(f"[INIT] Logger configured. Log file: {os.path.join(script_dir, 'amazon_a.log')}")
 
 bot = Bot(TOKEN)
 dp = Dispatcher()
 user_tasks = {}
 timer_tasks = {}
-print("[INIT] Bot and Dispatcher created.")
+#print("[INIT] Bot and Dispatcher created.")
 
 
 # ── DB helpers ─────────────────────────────────────────────────────────────────
 
 def db_connect():
-    print(f"[DB] Connecting to database...")
+    #print(f"[DB] Connecting to database...")
     conn = psycopg2.connect(conn_string)
-    print(f"[DB] Connected successfully.")
+    #print(f"[DB] Connected successfully.")
     return conn, conn.cursor()
 
 
 def db_close(conn, cursor):
     if cursor: cursor.close()
     if conn: conn.close()
-    print(f"[DB] Connection closed.")
+    #print(f"[DB] Connection closed.")
 
 
 def fetch_var(name):
-    print(f"[DB] fetch_var: {name}")
+    #print(f"[DB] fetch_var: {name}")
     conn, cur = db_connect()
     try:
         cur.execute("SELECT value FROM vars WHERE name = %s", (name,))
         result = cur.fetchone()[0]
-        print(f"[DB] fetch_var({name}) = {result}")
+        #print(f"[DB] fetch_var({name}) = {result}")
         return result
     finally:
         db_close(conn, cur)
 
 
 def update_var(name, value):
-    print(f"[DB] update_var: {name} = {value}")
+    #print(f"[DB] update_var: {name} = {value}")
     conn, cur = db_connect()
     try:
         cur.execute("UPDATE vars SET value = %s WHERE name = %s", (value, name))
         conn.commit()
-        print(f"[DB] update_var({name}) committed.")
+        #print(f"[DB] update_var({name}) committed.")
     finally:
         db_close(conn, cur)
 
@@ -88,20 +88,20 @@ def update_var(name, value):
 def fetch_format():
     val = str(fetch_var('a_format'))
     result = all_formats.get(val)
-    print(f"[CONFIG] fetch_format: key={val}, value={result}")
+    #print(f"[CONFIG] fetch_format: key={val}, value={result}")
     return result
 
 
 def fetch_sort_by():
     val = str(fetch_var('a_sort_by'))
     result = all_sort.get(val)
-    print(f"[CONFIG] fetch_sort_by: key={val}, value={result}")
+    #print(f"[CONFIG] fetch_sort_by: key={val}, value={result}")
     return result
 
 
 def fetch_year():
     result = str(fetch_var('a_year'))
-    print(f"[CONFIG] fetch_year: {result}")
+    #print(f"[CONFIG] fetch_year: {result}")
     return result
 
 
@@ -121,15 +121,15 @@ class WebDriverManager:
                     break
             else:
                 user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-        print(f"[DRIVER] Building Chrome driver. proxy={proxy_string}, ua={user_agent[:80]}...")
+        #print(f"[DRIVER] Building Chrome driver. proxy={proxy_string}, ua={user_agent[:80]}...")
         driver = Driver(browser="chrome", uc=True, agent=user_agent)
         driver.set_window_size(1200, 800)
-        print(f"[DRIVER] Driver built successfully.")
+        #print(f"[DRIVER] Driver built successfully.")
         return driver
 
     def get_driver(self):
         if not self._instance:
-            print("[DRIVER] No existing instance, creating new driver...")
+            #print("[DRIVER] No existing instance, creating new driver...")
             self._instance = self._build_driver()
         return self._instance
 
@@ -137,20 +137,20 @@ class WebDriverManager:
         proxy_info = None
         if not self._instance:
             try:
-                print("[DRIVER] Fetching proxy from DB...")
+                #print("[DRIVER] Fetching proxy from DB...")
                 conn, cur = db_connect()
                 cur.execute("SELECT * FROM proxies WHERE comment like '%new10%' ORDER BY count ASC LIMIT 1")
                 proxy_info = cur.fetchone()
                 db_close(conn, cur)
-                print(f"[DRIVER] Proxy fetched: {proxy_info}")
+                #print(f"[DRIVER] Proxy fetched: {proxy_info}")
             except Exception as e:
-                print(f"[DRIVER] ERROR fetching proxy: {e}")
+                #print(f"[DRIVER] ERROR fetching proxy: {e}")
                 logger.error(f"Error fetching proxy: {e}")
             if proxy_info:
                 self._update_proxy(proxy_info[0])
                 self._instance = self._build_driver(proxy_string=proxy_info[1])
             else:
-                print("[DRIVER] No proxy found, building driver without proxy...")
+                #print("[DRIVER] No proxy found, building driver without proxy...")
                 self._instance = self._build_driver()
         return self._instance, proxy_info
 
@@ -159,28 +159,28 @@ class WebDriverManager:
 
     def _update_proxy(self, proxy_id):
         try:
-            print(f"[DRIVER] Updating proxy usage count for id={proxy_id}")
+            #print(f"[DRIVER] Updating proxy usage count for id={proxy_id}")
             conn, cur = db_connect()
             cur.execute("UPDATE proxies SET date = %s, count = count + 1 WHERE id = %s", (datetime.now(), proxy_id))
             conn.commit()
             db_close(conn, cur)
         except Exception as e:
-            print(f"[DRIVER] ERROR updating proxy: {e}")
+            #print(f"[DRIVER] ERROR updating proxy: {e}")
             logger.error(f"Error updating proxy: {e}")
 
     def close_driver(self):
         if self._instance:
-            print("[DRIVER] Closing driver...")
+            #print("[DRIVER] Closing driver...")
             self._instance.quit()
             self._instance = None
-            print("[DRIVER] Driver closed.")
+            #print("[DRIVER] Driver closed.")
 
 
 # ── Bot commands ───────────────────────────────────────────────────────────────
 
 @dp.message(Command("start"))
 async def handle_start(message: types.Message):
-    print(f"[BOT] /start from user {message.from_user.id}")
+    #print(f"[BOT] /start from user {message.from_user.id}")
     if message.from_user.id in ADMIN_IDS:
         if message.from_user.id not in user_tasks or not user_tasks[message.from_user.id]:
             await message.answer("🚀 Bot started!")
@@ -193,7 +193,7 @@ async def handle_start(message: types.Message):
 
 @dp.message(Command("stop"))
 async def handle_stop(message: types.Message):
-    print(f"[BOT] /stop from user {message.from_user.id}")
+    #print(f"[BOT] /stop from user {message.from_user.id}")
     if message.from_user.id in ADMIN_IDS:
         if message.from_user.id in user_tasks and user_tasks[message.from_user.id]:
             user_tasks[message.from_user.id].cancel()
@@ -207,7 +207,7 @@ async def handle_stop(message: types.Message):
 
 @dp.message(Command("timer"))
 async def handle_timer(message: types.Message):
-    print(f"[BOT] /timer from user {message.from_user.id}")
+    #print(f"[BOT] /timer from user {message.from_user.id}")
     if message.from_user.id in ADMIN_IDS:
         if message.from_user.id not in timer_tasks or not timer_tasks[message.from_user.id]:
             await message.answer("🚀 Timer started!")
@@ -220,7 +220,7 @@ async def handle_timer(message: types.Message):
 
 @dp.message(Command("top"))
 async def handle_top(message: types.Message):
-    print(f"[BOT] /top from user {message.from_user.id}")
+    #print(f"[BOT] /top from user {message.from_user.id}")
     if message.from_user.id in ADMIN_IDS:
         if message.from_user.id in timer_tasks and timer_tasks[message.from_user.id]:
             timer_tasks[message.from_user.id].cancel()
@@ -232,7 +232,7 @@ async def handle_top(message: types.Message):
 
 @dp.message(Command("retry"))
 async def handle_retry(message: types.Message):
-    print(f"[BOT] /retry from user {message.from_user.id}")
+    #print(f"[BOT] /retry from user {message.from_user.id}")
     if message.from_user.id in ADMIN_IDS:
         if message.from_user.id not in user_tasks or not user_tasks[message.from_user.id]:
             await message.answer("Retrying...")
@@ -326,29 +326,29 @@ async def working_proxy(message: types.Message):
 
 
 async def _check_proxy(message):
-    print(f"[PROXY] Checking proxy for user {message.from_user.id}")
+    #print(f"[PROXY] Checking proxy for user {message.from_user.id}")
     manager = WebDriverManager()
     try:
         driver, proxy_info = manager.get_working_proxy_driver()
         await bot.send_message(message.from_user.id, f"proxy: {proxy_info}")
-        print(f"[PROXY] Navigating to whatismyipaddress.com...")
+        #print(f"[PROXY] Navigating to whatismyipaddress.com...")
         driver.get('https://whatismyipaddress.com/')
         time.sleep(3)
         try:
             driver.find_element(By.XPATH, '/html/body/div[1]/div/div/div/div[2]/div/button[2]').click()
-            print("[PROXY] Cookie banner dismissed.")
+            #print("[PROXY] Cookie banner dismissed.")
         except:
             print("[PROXY] No cookie banner found (or couldn't dismiss).")
         ip = driver.find_element(By.XPATH, '/html/body/div[2]/div/div/div/div/article/div/div/div[1]/div/div[2]/div/div/div/div/div/div[2]/div[1]/div[1]/p[2]/span[2]/a').text.strip()
         country = driver.find_element(By.XPATH, '/html/body/div[2]/div/div/div/div/article/div/div/div[1]/div/div[2]/div/div/div/div/div/div[2]/div[1]/div[3]/div/p[4]/span[2]').text.strip()
-        print(f"[PROXY] IP={ip}, Country={country}")
+        #print(f"[PROXY] IP={ip}, Country={country}")
         await bot.send_message(message.from_user.id, f"IP: {ip}, Country: {country}")
         conn, cur = db_connect()
         cur.execute(f"UPDATE proxies SET comment = CONCAT(comment, ' -{country}') WHERE proxy like '%{ip}%'")
         conn.commit()
         db_close(conn, cur)
     except Exception as e:
-        print(f"[PROXY] ERROR: {e}")
+        #print(f"[PROXY] ERROR: {e}")
         await bot.send_message(message.from_user.id, f"Error: {e}")
     finally:
         manager.close_driver()
@@ -433,7 +433,7 @@ async def handle_help(message: types.Message):
 
 @dp.message()
 async def handle_text(message: types.Message):
-    print(f"[BOT] Text message from {message.from_user.id}: {message.text!r}")
+    #print(f"[BOT] Text message from {message.from_user.id}: {message.text!r}")
     if message.from_user.id not in ADMIN_IDS:
         await message.answer("Not authorised.")
         return
@@ -480,107 +480,107 @@ async def handle_text(message: types.Message):
 # ── Core logic ─────────────────────────────────────────────────────────────────
 
 async def timer_repeat(chat_id):
-    print(f"[TIMER] timer_repeat started for chat_id={chat_id}")
+    #print(f"[TIMER] timer_repeat started for chat_id={chat_id}")
     while chat_id in timer_tasks and timer_tasks[chat_id]:
         await repeat_a(chat_id)
         await bot.send_message(chat_id, "Sleeping 60 min.")
-        print(f"[TIMER] Sleeping 60 minutes...")
+        #print(f"[TIMER] Sleeping 60 minutes...")
         await asyncio.sleep(3600)
 
 
 async def repeat_a(chat_id):
-    print(f"[REPEAT] repeat_a called for chat_id={chat_id}")
+    #print(f"[REPEAT] repeat_a called for chat_id={chat_id}")
     try:
         result_now = int(fetch_var('a_category'))
         a_month = int(fetch_var('a_month'))
+        a_year = int(fetch_var('a_year'))
         result_max = 15
-        print(f"[REPEAT] category={result_now}, month={a_month}")
+        #print(f"[REPEAT] category={result_now}, month={a_month}, year={a_year}")
 
-        if a_month == 13:
-            print("[REPEAT] Month=13, all done.")
-            await bot.send_message(chat_id, "Month = 13. Done.")
-            return
+        # Phase 1: months 9/2025 → 3/2026 — run normally
+        # Phase 2: month 4+ (2026+) — cycle format 1→2→3→1, and when format resets to 1 also bump sort
+        # Never fully stop — just keep going in Phase 2 indefinitely
 
-        await bot.send_message(chat_id, f"🏀 Starting subject {result_now} month {a_month}")
+        await bot.send_message(chat_id, f"🏀 Starting subject {result_now} month {a_month} year {a_year}")
         await start_a(chat_id, result_now, str(a_month))
     except Exception as e:
-        print(f"[REPEAT] ERROR: {e}")
+        #print(f"[REPEAT] ERROR: {e}")
         logger.error(f"repeat_a: {e}")
         await bot.send_message(chat_id, f"repeat_a error: {e}")
 
 
 async def retry_a(chat_id):
-    print(f"[RETRY] retry_a started for chat_id={chat_id}")
+    #print(f"[RETRY] retry_a started for chat_id={chat_id}")
     while True:
         try:
             conn, cur = db_connect()
             cur.execute("SELECT * FROM amazon_retry ORDER BY id ASC")
             row = cur.fetchone()
             if not row:
-                print("[RETRY] No rows in retry queue. Done.")
+                #print("[RETRY] No rows in retry queue. Done.")
                 db_close(conn, cur)
                 break
             month, category = row[2], row[1]
-            print(f"[RETRY] Processing: category={category}, month={month}")
+            #print(f"[RETRY] Processing: category={category}, month={month}")
             cur.execute("DELETE FROM amazon_retry WHERE id = %s", (row[0],))
             conn.commit()
             db_close(conn, cur)
             await bot.send_message(chat_id, f"Retry {category} {month}")
             await start_a(chat_id, category, str(month))
         except Exception as e:
-            print(f"[RETRY] ERROR: {e}")
+            #print(f"[RETRY] ERROR: {e}")
             await bot.send_message(chat_id, f"retry_a error: {e}")
             break
 
 
 async def start_a(chat_id, subject_int, month):
-    print(f"[SCRAPER] start_a called: subject_int={subject_int}, month={month}, chat_id={chat_id}")
+    #print(f"[SCRAPER] start_a called: subject_int={subject_int}, month={month}, chat_id={chat_id}")
     async with aiohttp.ClientSession() as session:
         manager = WebDriverManager()
         driver = None
         page = 1
         try:
-            print("[SCRAPER] Getting driver with proxy...")
+            #print("[SCRAPER] Getting driver with proxy...")
             driver, proxy_info = manager.get_working_proxy_driver()
-            print(f"[SCRAPER] Proxy info: {proxy_info}")
+            #print(f"[SCRAPER] Proxy info: {proxy_info}")
 
-            print("[SCRAPER] Navigating to Amazon advanced search...")
+            #print("[SCRAPER] Navigating to Amazon advanced search...")
             driver.get('https://www.amazon.com/advanced-search/books')
-            print("[SCRAPER] Page loaded.")
+            #print("[SCRAPER] Page loaded.")
 
             subject = str(dicti[subject_int])
             fmt = fetch_format()
             sort_by = fetch_sort_by()
             year = fetch_year()
-            print(f"[SCRAPER] Search params: subject={subject}, fmt={fmt}, sort_by={sort_by}, year={year}, month={month}")
+            #print(f"[SCRAPER] Search params: subject={subject}, fmt={fmt}, sort_by={sort_by}, year={year}, month={month}")
 
-            print("[SCRAPER] Setting form fields...")
+            #print("[SCRAPER] Setting form fields...")
             Select(driver.find_element(By.XPATH, x_published_date)).select_by_visible_text('During')
-            print("[SCRAPER] Set published_date=During")
+            #print("[SCRAPER] Set published_date=During")
             Select(driver.find_element(By.XPATH, x_month)).select_by_value(month)
-            print(f"[SCRAPER] Set month={month}")
+            #print(f"[SCRAPER] Set month={month}")
             Select(driver.find_element(By.XPATH, x_sort)).select_by_value(sort_by)
-            print(f"[SCRAPER] Set sort={sort_by}")
+            #print(f"[SCRAPER] Set sort={sort_by}")
             year_input = driver.find_element(By.XPATH, x_year)
             year_input.clear()
             year_input.send_keys(year)
-            print(f"[SCRAPER] Set year={year}")
+            #print(f"[SCRAPER] Set year={year}")
             Select(driver.find_element(By.XPATH, x_subject)).select_by_value(subject)
-            print(f"[SCRAPER] Set subject={subject}")
+            #print(f"[SCRAPER] Set subject={subject}")
             Select(driver.find_element(By.XPATH, x_condition)).select_by_value('1294423011')
-            print("[SCRAPER] Set condition.")
+            #print("[SCRAPER] Set condition.")
             Select(driver.find_element(By.XPATH, x_format)).select_by_visible_text(fmt)
-            print(f"[SCRAPER] Set format={fmt}")
+            #print(f"[SCRAPER] Set format={fmt}")
             Select(driver.find_element(By.XPATH, x_language)).select_by_value('English')
-            print("[SCRAPER] Set language=English")
+            #print("[SCRAPER] Set language=English")
             time.sleep(1)
-            print("[SCRAPER] Clicking search button...")
+            #print("[SCRAPER] Clicking search button...")
             driver.find_element(By.XPATH, x_search_button).click()
             time.sleep(3)
-            print("[SCRAPER] Search submitted, results loading...")
+            #print("[SCRAPER] Search submitted, results loading...")
 
             search_query = f"{page}page {subject_int}sub {month}: {year} {fmt} sort:{sort_by}"
-            print(f"[SCRAPER] search_query={search_query}")
+            #print(f"[SCRAPER] search_query={search_query}")
 
             # update category/month counter
             try:
@@ -588,15 +588,90 @@ async def start_a(chat_id, subject_int, month):
                 if subject_new <= 15:
                     update_var('a_category', subject_new)
                     await bot.send_message(chat_id, f"subject = {subject_new}")
-                    print(f"[SCRAPER] Counter updated: subject={subject_new}")
+                    #print(f"[SCRAPER] Counter updated: subject={subject_new}")
                 else:
+                    # Subject cycle complete — reset subject to 2, advance month
                     update_var('a_category', 2)
                     a_month_new = int(month) + 1
-                    update_var('a_month', a_month_new)
-                    await bot.send_message(chat_id, f"subject reset, month = {a_month_new}")
-                    print(f"[SCRAPER] Counter reset: subject=2, month={a_month_new}")
+                    a_year_now = int(fetch_var('a_year'))
+
+                    # ── Year rollover: Dec 2025 → Jan 2026 ──
+                    if a_month_new == 13:
+                        a_month_new = 1
+                        a_year_new = a_year_now + 1
+                        update_var('a_year', a_year_new)
+                        update_var('a_month', a_month_new)
+                        await bot.send_message(chat_id, f"🎉 Year rollover! year={a_year_new}, month={a_month_new}")
+                        #print(f"[SCRAPER] Year rollover: year={a_year_new}, month={a_month_new}")
+
+                    # ── Round reset: subject 15 just finished month 3 of 2026 → reset month to DB min, year to 2025, cycle format/sort ──
+                    elif int(month) == 3 and a_year_now == 2026:
+                        conn, cur = db_connect()
+                        cur.execute("SELECT min FROM vars WHERE name = 'a_month'")
+                        month_min = int(cur.fetchone()[0])
+                        db_close(conn, cur)
+
+                        fmt_now = int(fetch_var('a_format'))
+                        fmt_new = fmt_now + 1
+
+                        if fmt_new > 3:
+                            # Format wraps to 1 — also advance sort
+                            fmt_new = 1
+                            sort_now = int(fetch_var('a_sort_by'))
+                            sort_new = sort_now + 1
+
+                            if sort_new > 6:
+                                # Sort 6 was already used — this is the END
+                                update_var('a_format', fmt_new)
+                                update_var('a_sort_by', sort_new)
+                                await bot.send_message(chat_id, f"🏁 ALL DONE! Sort reached end (6). Stopping.")
+                                #print(f"[SCRAPER] END: sort exceeded 6. Stopping.")
+                                if chat_id in user_tasks and user_tasks[chat_id]:
+                                    user_tasks[chat_id].cancel()
+                                    user_tasks.pop(chat_id, None)
+                                return
+                            else:
+                                update_var('a_format', fmt_new)
+                                update_var('a_sort_by', sort_new)
+                                update_var('a_month', month_min)
+                                update_var('a_year', 2025)
+                                await bot.send_message(chat_id, f"🔁 Round complete! format=1, sort={sort_new}, reset to month={month_min}, year=2025")
+                                #print(f"[SCRAPER] Round reset: format=1, sort={sort_new}, month={month_min}, year=2025")
+                        else:
+                            # Format still cycling (1→2 or 2→3)
+                            update_var('a_format', fmt_new)
+                            update_var('a_month', month_min)
+                            update_var('a_year', 2025)
+                            await bot.send_message(chat_id, f"🔁 Round complete! format={fmt_new}, reset to month={month_min}, year=2025")
+                            #print(f"[SCRAPER] Round reset: format={fmt_new}, month={month_min}, year=2025")
+
+                    # ── Phase 2: month 4+ → cycle format 1→2→3→1, sort bumps on wrap ──
+                    elif a_month_new >= 4 and a_year_now >= 2026:
+                        update_var('a_month', a_month_new)
+                        fmt_now = int(fetch_var('a_format'))
+                        fmt_new = fmt_now + 1
+                        if fmt_new > 3:
+                            fmt_new = 1
+                            # Format wrapped back to 1 — also increment sort
+                            sort_now = int(fetch_var('a_sort_by'))
+                            sort_new = sort_now + 1
+                            update_var('a_sort_by', sort_new)
+                            update_var('a_format', fmt_new)
+                            await bot.send_message(chat_id, f"🔄 Format reset to 1, sort bumped to {sort_new}, month={a_month_new}")
+                            #print(f"[SCRAPER] Phase2: format=1, sort={sort_new}, month={a_month_new}")
+                        else:
+                            update_var('a_format', fmt_new)
+                            await bot.send_message(chat_id, f"🔄 Format → {fmt_new}, month={a_month_new}")
+                            #print(f"[SCRAPER] Phase2: format={fmt_new}, month={a_month_new}")
+
+                    # ── Phase 1: normal month advance (months 9/2025 → 3/2026) ──
+                    else:
+                        update_var('a_month', a_month_new)
+                        await bot.send_message(chat_id, f"subject reset, month = {a_month_new}")
+                        #print(f"[SCRAPER] Counter reset: subject=2, month={a_month_new}")
+
             except Exception as e:
-                print(f"[SCRAPER] Counter update ERROR: {e}")
+                #print(f"[SCRAPER] Counter update ERROR: {e}")
                 await bot.send_message(chat_id, f"Counter error: {e}")
 
             seen_links = set()
@@ -604,7 +679,7 @@ async def start_a(chat_id, subject_int, month):
             def scrape_current_items():
                 saved = 0
                 items = driver.find_elements(By.XPATH, '/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div')
-                print(f"[SCRAPER] scrape_current_items: found {len(items)} raw items on page {page}")
+                #print(f"[SCRAPER] scrape_current_items: found {len(items)} raw items on page {page}")
                 for item in items:
                     try:
                         xtitle   = './/div[contains(@class,"sg-col-inner")]//div[contains(@class,"a-section")]//a[contains(@href,"/dp/") or contains(@href,"/stores/")]'
@@ -631,12 +706,12 @@ async def start_a(chat_id, subject_int, month):
                             except NoSuchElementException:
                                 pass
                         if title_element is None:
-                            print(f"[SCRAPER] No title_element found for item, skipping.")
+                            #print(f"[SCRAPER] No title_element found for item, skipping.")
                             continue
 
                         link = title_element.get_attribute("href")
                         if not link:
-                            print(f"[SCRAPER] Empty href on title_element, skipping.")
+                            #print(f"[SCRAPER] Empty href on title_element, skipping.")
                             continue
 
                         if link.startswith("https://www.amazon.com/dp/"):
@@ -647,22 +722,22 @@ async def start_a(chat_id, subject_int, month):
                         if "author" in parts:
                             try: asin = parts[parts.index("author") + 1].split("?")[0]
                             except:
-                                print(f"[SCRAPER] Failed to parse author ASIN from link: {link}")
+                                #print(f"[SCRAPER] Failed to parse author ASIN from link: {link}")
                                 continue
                         elif "/e/" in link:
                             try: asin = parts[-1].split("?")[0]
                             except:
-                                print(f"[SCRAPER] Failed to parse /e/ ASIN from link: {link}")
+                                #print(f"[SCRAPER] Failed to parse /e/ ASIN from link: {link}")
                                 continue
                         else:
-                            print(f"[SCRAPER] Link not author/store format, skipping: {link}")
+                            #print(f"[SCRAPER] Link not author/store format, skipping: {link}")
                             continue
 
                         final_link = f"https://www.amazon.com/stores/author/{asin}/about"
                         if final_link in seen_links:
                             continue
                         seen_links.add(final_link)
-                        print(f"✅ {final_link}")
+                        #print(f"✅ {final_link}")
 
                         try:
                             conn, cur = db_connect()
@@ -680,7 +755,7 @@ async def start_a(chat_id, subject_int, month):
                     except Exception as ex:
                         print(f"[SCRAPER] Unexpected item error: {ex}")
                         continue
-                print(f"[SCRAPER] scrape_current_items: saved {saved} new links.")
+                #print(f"[SCRAPER] scrape_current_items: saved {saved} new links.")
                 return saved
 
             # detect mode: paginated (next button exists) or infinite scroll
@@ -695,11 +770,11 @@ async def start_a(chat_id, subject_int, month):
                     try:
                         btn = driver.find_element(By.XPATH, xp)
                         if btn.is_displayed() and btn.is_enabled():
-                            print(f"[SCRAPER] Next button found: {xp}")
+                            #print(f"[SCRAPER] Next button found: {xp}")
                             return btn
                     except NoSuchElementException:
                         pass
-                print("[SCRAPER] No next button found (infinite scroll mode or last page).")
+                #print("[SCRAPER] No next button found (infinite scroll mode or last page).")
                 return None
 
             while page < 100:
@@ -708,10 +783,10 @@ async def start_a(chat_id, subject_int, month):
                     result_text = res_span.text.strip()
                 except NoSuchElementException:
                     result_text = ""
-                    print(f"[SCRAPER] Result count span not found on page {page}.")
+                    #print(f"[SCRAPER] Result count span not found on page {page}.")
 
-                print(f"[SCRAPER] Page {page} result text: {result_text!r}")
-                await bot.send_message(chat_id, f"page {page}: {result_text}")
+                #print(f"[SCRAPER] Page {page} result text: {result_text!r}")
+                # await bot.send_message(chat_id, f"page {page}: {result_text}")
 
                 # save page html on page 1
                 if page == 1:
@@ -719,63 +794,63 @@ async def start_a(chat_id, subject_int, month):
                         with open(f'{page}.html', 'w', encoding='utf-8') as f:
                             f.write(driver.page_source)
                         doc = FSInputFile(path=f'{page}.html')
-                        await bot.send_document(chat_id, document=doc, caption=f'{page}.html')
+                        # await bot.send_document(chat_id, document=doc, caption=f'{page}.html')
                         os.remove(f'{page}.html')
-                        print("[SCRAPER] Page 1 HTML sent and deleted.")
+                        #print("[SCRAPER] Page 1 HTML sent and deleted.")
                     except Exception as e:
-                        print(f"[SCRAPER] HTML send error: {e}")
+                        #print(f"[SCRAPER] HTML send error: {e}")
                         await bot.send_message(chat_id, f"html error: {e}")
 
                 saved = scrape_current_items()
-                await bot.send_message(chat_id, f"{saved} new links - page {page}")
+                # await bot.send_message(chat_id, f"{saved} new links - page {page}")
 
                 next_btn = find_next_button()
 
                 if next_btn:
                     # paginated mode
                     try:
-                        print(f"[SCRAPER] Clicking next button for page {page + 1}...")
+                        #print(f"[SCRAPER] Clicking next button for page {page + 1}...")
                         next_btn.click()
                         sleep(3)
                         page += 1
-                        print(f"[SCRAPER] Now on page {page}.")
+                        #print(f"[SCRAPER] Now on page {page}.")
                     except Exception as e:
-                        print(f"[SCRAPER] Next button click failed: {e}")
+                        #print(f"[SCRAPER] Next button click failed: {e}")
                         await bot.send_message(chat_id, f"Next button click failed: {e}")
                         break
                 else:
                     # infinite scroll mode
                     last_height = driver.execute_script("return document.body.scrollHeight")
-                    print(f"[SCRAPER] Scrolling... current height={last_height}")
+                    #print(f"[SCRAPER] Scrolling... current height={last_height}")
                     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
                     sleep(3)
                     new_height = driver.execute_script("return document.body.scrollHeight")
-                    print(f"[SCRAPER] After scroll height={new_height}")
+                    #print(f"[SCRAPER] After scroll height={new_height}")
 
                     if new_height == last_height:
-                        print(f"[SCRAPER] No new content after scroll. Bottom reached.")
+                        #print(f"[SCRAPER] No new content after scroll. Bottom reached.")
                         await bot.send_message(chat_id, f"Bottom reached. Done. {page} scrolls.")
                         break
 
                     page += 1
-                    print(f"[SCRAPER] Scroll {page} loaded new content.")
+                    #print(f"[SCRAPER] Scroll {page} loaded new content.")
 
-            print(f"[SCRAPER] Loop finished. Total unique links: {len(seen_links)}")
+            #print(f"[SCRAPER] Loop finished. Total unique links: {len(seen_links)}")
             await bot.send_message(chat_id, f"⚽️ Finished. Total unique links: {len(seen_links)}")
 
         except Exception as e:
             msg = str(e)
             idx = msg.lower().find("stacktrace")
             short_msg = msg[:idx] if idx != -1 else msg
-            print(f"[SCRAPER] FATAL ERROR: {short_msg}")
+            #print(f"[SCRAPER] FATAL ERROR: {short_msg}")
             await bot.send_message(chat_id, f"Error: {short_msg}")
             try:
                 with open(f'{page}.html', 'w', encoding='utf-8') as f:
                     f.write(driver.page_source)
                 doc = FSInputFile(path=f'{page}.html')
-                await bot.send_document(chat_id, document=doc)
+                # await bot.send_document(chat_id, document=doc)
                 os.remove(f'{page}.html')
-                print(f"[SCRAPER] Error HTML page {page} sent.")
+                #print(f"[SCRAPER] Error HTML page {page} sent.")
             except Exception as dump_err:
                 print(f"[SCRAPER] Could not dump error HTML: {dump_err}")
 
@@ -789,17 +864,17 @@ async def start_a(chat_id, subject_int, month):
                 await session.close()
             except Exception as e:
                 print(f"[SCRAPER] session.close error: {e}")
-            print("[SCRAPER] start_a finished. Auto-restarting in 5s...")
+            #print("[SCRAPER] start_a finished. Auto-restarting in 5s...")
             await asyncio.sleep(5)
             if chat_id in user_tasks and user_tasks[chat_id]:
-                print("[SCRAPER] Auto-restarting repeat_a...")
+                #print("[SCRAPER] Auto-restarting repeat_a...")
                 user_tasks[chat_id] = asyncio.create_task(repeat_a(chat_id))
 
 
 async def main():
-    print("[MAIN] Starting bot polling...")
+    #print("[MAIN] Starting bot polling...")
     await dp.start_polling(Bot(token=TOKEN), skip_updates=True)
 
 if __name__ == '__main__':
-    print("[MAIN] Script started.")
+    #print("[MAIN] Script started.")
     asyncio.run(main())
