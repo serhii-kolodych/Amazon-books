@@ -121,11 +121,11 @@ async def handle_total(message: types.Message):
     offset_row = db_fetchone("SELECT value FROM vars WHERE name = 'offset'")
     offset = int(offset_row[0].strip()) if offset_row else 0
     await message.answer(
-        f"Total: {total}\n"
-        f"XLS (links): {counts['xls'] - offset}\n"
-        f"New (to scan): {counts['new']}\n"
-        f"Text: {counts['text']}\n"
-        f"Links: {counts['links']}"
+        f"🔗 Total: {counts['xls'] - offset} author-links 🔗\n"
+        f"To Scan New /start: {counts['new']} ⚠️\n"
+        f"Links found: {counts['links']}\n"
+        f"Some text (no-links): {counts['text']}\n"
+        f"All: {total}"
     )
 
 
