@@ -1,12 +1,12 @@
 [Unit]
-Description=Amazon books bot
+Description=22 Amazon books bot
 After=network.target postgresql.service
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/root/amazon-books-parser
-ExecStart=/root/amazon-books-parser/venv/bin/python amazon_a.py
+WorkingDirectory=/root/amazon
+ExecStart=/root/amazon/venv/bin/python bamazon.py
 Restart=always
 RestartSec=10
 StartLimitBurst=5
