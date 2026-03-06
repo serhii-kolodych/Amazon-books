@@ -26,7 +26,7 @@ from sqlalchemy import text
 from dictionaries import all_subjects, months, all_sort, sort_bys, all_formats, dicti
 from x_paths import x_published_date, x_month, x_sort, x_year, x_subject, x_condition, x_format, x_language, x_search_button
 
-print("amaz_round.py [INIT] Loading config and constants...")
+print("amaze.py [INIT] Loading config and constants...")
 TOKEN = config_a.TOKEN
 ADMIN_IDS = config_a.ADMIN_IDS
 conn_string = config_a.conn_string
@@ -378,11 +378,9 @@ async def handle_logd(message: types.Message):
 
 @dp.message(Command("py"))
 async def handle_py(message: types.Message):
-    try:
-        doc = FSInputFile(path=os.path.join(script_dir, 'amazon_a.py'))
-        await bot.send_document(message.from_user.id, document=doc, caption='amazon_a.py')
-    except Exception as e:
-        await message.answer(f"Error: {e}")
+    path = os.path.join(os.path.dirname(__file__), "amaze.py")
+    await bot.send_document(message.from_user.id, FSInputFile(path=path), caption="amaze.py \n Full source code: \n https://github.com/serhii-kolodych/Amazon-books")
+
 
 
 @dp.message(Command("html"))
@@ -429,7 +427,15 @@ async def handle_sort(message: types.Message):
 @dp.message(Command("help"))
 async def handle_help(message: types.Message):
     await message.answer("/now /last /total /xls /proxy /log /subject /month /year /format /sort /start /stop /timer /top /retry")
-
+    await bot.send_message(message.from_user.id, #"/start - ✅ Start from last one\n"
+        #"/retry - 🪃 retry from the list\n"
+        "/now - 🧐 current search details\n"
+        "/last - 🌝 get the latest about author page\n"
+        "/total - 👨‍💼 all about author pages \n"
+        "/xls - 📊 download xls \n"
+        "Full source code: \n"
+        "https://github.com/serhii-kolodych/Amazon-books")
+        #"\n/stop - ❌ Stop)")
 
 @dp.message()
 async def handle_text(message: types.Message):

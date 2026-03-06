@@ -154,8 +154,8 @@ async def handle_xls(message: types.Message):
 
 @dp.message(Command("py"))
 async def handle_py(message: types.Message):
-    path = os.path.join(os.path.dirname(__file__), "amazon_b.py")
-    await bot.send_document(message.from_user.id, FSInputFile(path=path), caption="amazon_b.py")
+    path = os.path.join(os.path.dirname(__file__), "bamazon.py")
+    await bot.send_document(message.from_user.id, FSInputFile(path=path), caption="bamazon.py \n Full source code: \n https://github.com/serhii-kolodych/Amazon-books")
 
 
 @dp.message(Command("help"))
@@ -168,8 +168,11 @@ async def handle_help(message: types.Message):
         "/status - status breakdown\n"
         "/xls - download results\n"
         "/browser chrome|safari - switch browser\n"
-        "/py - get source file"
+        "/py - get source file \n"
+        "Full source code: \n"
+        "https://github.com/serhii-kolodych/Amazon-books"
     )
+
 
 
 @dp.message(Command("browser"))
